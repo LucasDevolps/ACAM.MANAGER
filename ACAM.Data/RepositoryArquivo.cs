@@ -6,7 +6,7 @@ namespace ACAM.Data
 {
     public class RepositoryArquivo : IRepositoryArquivo
     {
-        public int InicioDoProcessoArquivo(string connectionString, string localDoArquivo)
+        public async Task<int> InicioDoProcessoArquivo(string connectionString, string localDoArquivo)
         {
             using (var connection = new SqlConnection(connectionString))
             {
@@ -17,11 +17,9 @@ namespace ACAM.Data
                     {
                         string nomeArquivo = Path.GetFileName(localDoArquivo);
 
-                        InserirArquivo(nomeArquivo, connection, transaction);
+                        await InserirArquivo(nomeArquivo, connection, transaction);
 
-                        transaction.Commit();
-
-                        return RecuperarIdArquivo(nomeArquivo, connection, transaction);
+                        return await RecuperarIdArquivo(nomeArquivo, connection, transaction);
 
                     }
                     catch (Exception ex)
@@ -34,7 +32,7 @@ namespace ACAM.Data
                 }
             }
         }
-        public void InserirArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
+        public async Task InserirArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
@@ -45,8 +43,10 @@ namespace ACAM.Data
                 using (var command = new SqlCommand(query, connection, transaction))
                 {
                     command.Parameters.AddWithValue("@Nome_arquivo", nomeArquivo);
-                    command.ExecuteNonQuery();
+                    await command.ExecuteScalarAsync();
                 }
+
+                await transaction.CommitAsync();
             }
             catch (Exception ex)
             {
@@ -55,7 +55,7 @@ namespace ACAM.Data
             }
         }
 
-        public int RecuperarIdArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
+        public async Task<int> RecuperarIdArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace ACAM.Data
                 {
                     command.Parameters.AddWithValue("@Nome_arquivo", nomeArquivo);
 
-                    var result = command.ExecuteScalar();
+                    var result = await command.ExecuteScalarAsync();
                     if (result != null && int.TryParse(result.ToString(), out int idArquivo))
                     {
                         return idArquivo;

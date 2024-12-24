@@ -10,19 +10,19 @@ namespace ACAM.Service
     {
         public IRepositoryArquivo _repository = new RepositoryArquivo();
 
-        public int InicioDoProcessoArquivo(string connectionString, string localDoArquivo)
+        public async Task<int> InicioDoProcessoArquivo(string connectionString, string localDoArquivo)
         {
-            return _repository.InicioDoProcessoArquivo(connectionString, localDoArquivo);
+            return await _repository.InicioDoProcessoArquivo(connectionString, localDoArquivo);
         }
 
-        public void InserirArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
+        public async Task InserirArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
         {
-            _repository.InserirArquivo(nomeArquivo,connection, transaction);
+            await _repository.InserirArquivo(nomeArquivo,connection, transaction);
         }
 
-        public int RecuperarIdArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
+        public async Task<int> RecuperarIdArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
         {
-            return _repository.RecuperarIdArquivo(nomeArquivo, connection, transaction);
+            return await _repository.RecuperarIdArquivo(nomeArquivo, connection, transaction);
         }
     }
 }

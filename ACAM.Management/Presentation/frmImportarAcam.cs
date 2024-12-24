@@ -27,6 +27,8 @@ namespace ACAM.Management.Presentation
 
         private void frmImportAcam_Load(object sender, EventArgs e)
         {
+            progressBar1.Visible = false;
+
             try
             {
                 string caminhoImportacao = _configuration["Configuracoes:CaminhoLocal"];
@@ -56,7 +58,7 @@ namespace ACAM.Management.Presentation
 
                 var sortedItems = listFileAcams.Items
                     .Cast<ACAM.Domain.DTOs.AcamFilesDto>()
-                    .OrderBy(item => item.FileName) 
+                    .OrderBy(item => item.FileName)
                     .ToList();
 
                 listFileAcams.Items.Clear();
@@ -75,10 +77,14 @@ namespace ACAM.Management.Presentation
             }
         }
 
-        private void btnProcessar_Click(object sender, EventArgs e)
+        private async void btnProcessar_Click(object sender, EventArgs e)
         {
             try
             {
+                progressBar1.Visible = true; // Exibir o ProgressBar
+                progressBar1.Style = ProgressBarStyle.Marquee; // Indicador de progresso indeterminado
+                btnProcessar.Enabled = false; // Desabilitar o botão durante o processamento
+
                 string connectionString = _configuration["ConnectionStrings:DefaultConnection"];
 
                 for (int i = 0; i < listFileAcams.Items.Count; i++)
@@ -87,22 +93,22 @@ namespace ACAM.Management.Presentation
                     {
                         var filePath = (AcamFilesDto)listFileAcams.Items[i];
 
-                        int idFile = _serviceArquivo.InicioDoProcessoArquivo(connectionString, filePath.FilePath);
+                        int idFile = await _serviceArquivo.InicioDoProcessoArquivo(connectionString, filePath.FilePath);
 
+                        // Processar os arquivos de forma assíncrona
+                        await Task.Run(() =>
+                        {
+                            _servicesRegistros.ProcessarCsvPorStreaming(filePath.FilePath, idFile);
+                            _servicesRegistros.SalvarNaTabelaRestritiva(45000, idFile);
+                            _servicesRegistros.GerarRelatorioSaidaProcessamento(idFile);
+                        });
 
-                        _servicesRegistros.ProcessarCsvPorStreaming(filePath.FilePath, idFile);
+                        // Atualizar os DataGrids após o processamento
+                        dataGridView1.DataSource = await Task.Run(() => _servicesRegistros.GerarRelatorioVisualTotal(idFile));
+                        dataGridView2.DataSource = await Task.Run(() => _servicesRegistros.GerarRelatorioVisualNaoProcessados(idFile));
 
-                        _servicesRegistros.SalvarNaTabelaRestritiva(45000, idFile);
-
-                        _servicesRegistros.GerarRelatorioSaidaProcessamento(idFile);
-
-                        dataGridView1.DataSource = _servicesRegistros.GerarRelatorioVisualTotal(idFile);
-
-                        dataGridView2.DataSource = _servicesRegistros.GerarRelatorioVisualNaoProcessados(idFile);
-
-                        MessageBox.Show("Sucesso !","Sucesso",MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
-
                 }
             }
             catch (Exception ex)
@@ -112,7 +118,14 @@ namespace ACAM.Management.Presentation
 
                 MessageBox.Show(ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                // Ocultar o ProgressBar e reativar o botão ao final do processo
+                progressBar1.Visible = false;
+                btnProcessar.Enabled = true;
+            }
         }
+
 
         private void chkSelTodos_CheckedChanged(object sender, EventArgs e)
         {
@@ -131,5 +144,6 @@ namespace ACAM.Management.Presentation
                 MessageBox.Show(ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
     }
 }

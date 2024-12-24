@@ -35,9 +35,7 @@
             listFileAcams = new CheckedListBox();
             tabImport = new TabControl();
             tabPage1 = new TabPage();
-            tabPage2 = new TabPage();
             dataGridView1 = new DataGridView();
-            acamDTOBindingSource = new BindingSource(components);
             clientDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             pixKeyDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             cpfnameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
@@ -45,8 +43,9 @@
             trnDateDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             idfileDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             restritoDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
+            acamDTOBindingSource = new BindingSource(components);
+            tabPage2 = new TabPage();
             dataGridView2 = new DataGridView();
-            acamDTOBindingSource1 = new BindingSource(components);
             clientDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             pixKeyDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             cpfnameDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
@@ -54,18 +53,21 @@
             trnDateDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             idfileDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             restritoDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
+            acamDTOBindingSource1 = new BindingSource(components);
+            progressBar1 = new ProgressBar();
             groupBox1.SuspendLayout();
             tabImport.SuspendLayout();
             tabPage1.SuspendLayout();
-            tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)acamDTOBindingSource).BeginInit();
+            tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)acamDTOBindingSource1).BeginInit();
             SuspendLayout();
             // 
             // groupBox1
             // 
+            groupBox1.Controls.Add(progressBar1);
             groupBox1.Controls.Add(chkSelTodos);
             groupBox1.Controls.Add(btnProcessar);
             groupBox1.Controls.Add(listFileAcams);
@@ -129,17 +131,6 @@
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Processadas";
             // 
-            // tabPage2
-            // 
-            tabPage2.BackColor = SystemColors.ActiveCaption;
-            tabPage2.Controls.Add(dataGridView2);
-            tabPage2.Location = new Point(4, 24);
-            tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new Size(868, 358);
-            tabPage2.TabIndex = 1;
-            tabPage2.Text = "Não Processadas";
-            // 
             // dataGridView1
             // 
             dataGridView1.AutoGenerateColumns = false;
@@ -150,10 +141,6 @@
             dataGridView1.Name = "dataGridView1";
             dataGridView1.Size = new Size(856, 349);
             dataGridView1.TabIndex = 0;
-            // 
-            // acamDTOBindingSource
-            // 
-            acamDTOBindingSource.DataSource = typeof(Domain.DTOs.AcamDTO);
             // 
             // clientDataGridViewTextBoxColumn
             // 
@@ -197,6 +184,21 @@
             restritoDataGridViewTextBoxColumn.HeaderText = "restrito";
             restritoDataGridViewTextBoxColumn.Name = "restritoDataGridViewTextBoxColumn";
             // 
+            // acamDTOBindingSource
+            // 
+            acamDTOBindingSource.DataSource = typeof(Domain.DTOs.AcamDTO);
+            // 
+            // tabPage2
+            // 
+            tabPage2.BackColor = SystemColors.ActiveCaption;
+            tabPage2.Controls.Add(dataGridView2);
+            tabPage2.Location = new Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new Padding(3);
+            tabPage2.Size = new Size(868, 358);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Não Processadas";
+            // 
             // dataGridView2
             // 
             dataGridView2.AutoGenerateColumns = false;
@@ -207,10 +209,6 @@
             dataGridView2.Name = "dataGridView2";
             dataGridView2.Size = new Size(856, 349);
             dataGridView2.TabIndex = 0;
-            // 
-            // acamDTOBindingSource1
-            // 
-            acamDTOBindingSource1.DataSource = typeof(Domain.DTOs.AcamDTO);
             // 
             // clientDataGridViewTextBoxColumn1
             // 
@@ -254,6 +252,17 @@
             restritoDataGridViewTextBoxColumn1.HeaderText = "restrito";
             restritoDataGridViewTextBoxColumn1.Name = "restritoDataGridViewTextBoxColumn1";
             // 
+            // acamDTOBindingSource1
+            // 
+            acamDTOBindingSource1.DataSource = typeof(Domain.DTOs.AcamDTO);
+            // 
+            // progressBar1
+            // 
+            progressBar1.Location = new Point(769, 117);
+            progressBar1.Name = "progressBar1";
+            progressBar1.Size = new Size(100, 23);
+            progressBar1.TabIndex = 2;
+            // 
             // frmImportAcam
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -272,9 +281,9 @@
             groupBox1.PerformLayout();
             tabImport.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
-            tabPage2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ((System.ComponentModel.ISupportInitialize)acamDTOBindingSource).EndInit();
+            tabPage2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
             ((System.ComponentModel.ISupportInitialize)acamDTOBindingSource1).EndInit();
             ResumeLayout(false);
@@ -307,5 +316,6 @@
         private DataGridViewTextBoxColumn idfileDataGridViewTextBoxColumn1;
         private DataGridViewTextBoxColumn restritoDataGridViewTextBoxColumn1;
         private BindingSource acamDTOBindingSource1;
+        private ProgressBar progressBar1;
     }
 }

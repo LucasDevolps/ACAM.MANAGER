@@ -21,7 +21,7 @@ internal class Program
     public static IServiceArquivo _serviceArquivo = new ServiceArquivo();
     public static IServicesRegistros _servicesRegistros = new ServicesRegistros();
 
-    public static void Main(string[] args)
+    public static async void Main(string[] args)
     {
         _builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
 
@@ -49,8 +49,7 @@ internal class Program
                 {
                     Console.WriteLine($"Processando arquivo: {arquivo}");
 
-                    int idFile = _serviceArquivo.InicioDoProcessoArquivo(connectionString, arquivo);
-
+                    int idFile = await _serviceArquivo.InicioDoProcessoArquivo(connectionString, arquivo);
                     _servicesRegistros.ProcessarCsvPorStreaming(arquivo, idFile);
 
                     _servicesRegistros.FiltrarRegistrosPorValor(45000, idFile);
