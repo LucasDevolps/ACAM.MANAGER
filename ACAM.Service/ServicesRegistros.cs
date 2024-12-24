@@ -60,5 +60,10 @@ namespace ACAM.Service
         {
             return _repository.ConsultaBaseRestritra(dataInicial, dataFinal, documento);
         }
+
+        public IEnumerable<AcamDTO> ConsultaBaseGeral(string dataInicial, string dataFinal, int documento)
+        {
+            return _repository.ConsultaBaseGeral(dataInicial, dataFinal, documento);
+        }
     }
 }

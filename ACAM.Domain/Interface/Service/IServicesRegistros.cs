@@ -23,5 +23,7 @@ namespace ACAM.Domain.Interface.Service
         DataTable ListarArquivosJaProcessadosDoBanco();
 
         IEnumerable<AcamDTO> ConsultaBaseRestritra(string dataInicial, string dataFinal, string documento);
+
+        IEnumerable<AcamDTO> ConsultaBaseGeral(string dataInicial, string dataFinal, int documento);
     }
 }

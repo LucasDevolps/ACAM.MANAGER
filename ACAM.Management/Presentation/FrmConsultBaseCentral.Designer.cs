@@ -30,6 +30,7 @@
         {
             components = new System.ComponentModel.Container();
             grdTabela = new DataGridView();
+            acamDTOBindingSource = new BindingSource(components);
             groupBox1 = new GroupBox();
             btnConsultar = new Button();
             rdbCNPJ = new RadioButton();
@@ -37,11 +38,10 @@
             maskedTextBox3 = new MaskedTextBox();
             label3 = new Label();
             label2 = new Label();
-            maskedTextBox2 = new MaskedTextBox();
-            maskedTextBox1 = new MaskedTextBox();
+            dtFinal = new MaskedTextBox();
+            dtInicial = new MaskedTextBox();
             label1 = new Label();
             comboBox1 = new ComboBox();
-            acamDTOBindingSource = new BindingSource(components);
             clientDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             pixKeyDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             cpfnameDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
@@ -50,8 +50,8 @@
             idfileDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             restritoDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)grdTabela).BeginInit();
-            groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)acamDTOBindingSource).BeginInit();
+            groupBox1.SuspendLayout();
             SuspendLayout();
             // 
             // grdTabela
@@ -64,6 +64,11 @@
             grdTabela.Name = "grdTabela";
             grdTabela.Size = new Size(876, 425);
             grdTabela.TabIndex = 0;
+            grdTabela.CellContentClick += grdTabela_CellContentClick;
+            // 
+            // acamDTOBindingSource
+            // 
+            acamDTOBindingSource.DataSource = typeof(Domain.DTOs.AcamDTO);
             // 
             // groupBox1
             // 
@@ -73,8 +78,8 @@
             groupBox1.Controls.Add(maskedTextBox3);
             groupBox1.Controls.Add(label3);
             groupBox1.Controls.Add(label2);
-            groupBox1.Controls.Add(maskedTextBox2);
-            groupBox1.Controls.Add(maskedTextBox1);
+            groupBox1.Controls.Add(dtFinal);
+            groupBox1.Controls.Add(dtInicial);
             groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(comboBox1);
             groupBox1.Location = new Point(12, 7);
@@ -143,23 +148,24 @@
             label2.TabIndex = 4;
             label2.Text = "Data Inicial";
             // 
-            // maskedTextBox2
+            // dtFinal
             // 
-            maskedTextBox2.Location = new Point(553, 34);
-            maskedTextBox2.Mask = "00/00/0000";
-            maskedTextBox2.Name = "maskedTextBox2";
-            maskedTextBox2.Size = new Size(95, 23);
-            maskedTextBox2.TabIndex = 3;
-            maskedTextBox2.ValidatingType = typeof(DateTime);
+            dtFinal.Location = new Point(553, 34);
+            dtFinal.Mask = "00/00/0000";
+            dtFinal.Name = "dtFinal";
+            dtFinal.Size = new Size(95, 23);
+            dtFinal.TabIndex = 3;
+            dtFinal.ValidatingType = typeof(DateTime);
             // 
-            // maskedTextBox1
+            // dtInicial
             // 
-            maskedTextBox1.Location = new Point(445, 34);
-            maskedTextBox1.Mask = "00/00/0000";
-            maskedTextBox1.Name = "maskedTextBox1";
-            maskedTextBox1.Size = new Size(100, 23);
-            maskedTextBox1.TabIndex = 2;
-            maskedTextBox1.ValidatingType = typeof(DateTime);
+            dtInicial.Location = new Point(445, 34);
+            dtInicial.Mask = "00/00/0000";
+            dtInicial.Name = "dtInicial";
+            dtInicial.Size = new Size(100, 23);
+            dtInicial.TabIndex = 2;
+            dtInicial.ValidatingType = typeof(DateTime);
+            dtInicial.MaskInputRejected += maskedTextBox1_MaskInputRejected;
             // 
             // label1
             // 
@@ -177,10 +183,7 @@
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new Size(435, 23);
             comboBox1.TabIndex = 0;
-            // 
-            // acamDTOBindingSource
-            // 
-            acamDTOBindingSource.DataSource = typeof(Domain.DTOs.AcamDTO);
+            comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
             // clientDataGridViewTextBoxColumn
             // 
@@ -237,10 +240,11 @@
             Name = "FrmConsultBaseCentral";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Consultar Base Central de ACAMs Importadas";
+            Load += FrmConsultBaseCentral_Load;
             ((System.ComponentModel.ISupportInitialize)grdTabela).EndInit();
+            ((System.ComponentModel.ISupportInitialize)acamDTOBindingSource).EndInit();
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)acamDTOBindingSource).EndInit();
             ResumeLayout(false);
         }
 
@@ -248,16 +252,17 @@
 
         private DataGridView grdTabela;
         private GroupBox groupBox1;
-        private MaskedTextBox maskedTextBox2;
-        private MaskedTextBox maskedTextBox1;
+        private MaskedTextBox dtFinal;
+        private MaskedTextBox dtInicial;
         private Label label1;
-        private ComboBox comboBox1;
         private MaskedTextBox maskedTextBox3;
         private Label label3;
         private Label label2;
         private RadioButton rdbCPF;
         private RadioButton rdbCNPJ;
         private Button btnConsultar;
+        private BindingSource acamDTOBindingSource;
+        private ComboBox comboBox1;
         private DataGridViewTextBoxColumn clientDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn pixKeyDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn cpfnameDataGridViewTextBoxColumn;
@@ -265,6 +270,5 @@
         private DataGridViewTextBoxColumn trnDateDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn idfileDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn restritoDataGridViewTextBoxColumn;
-        private BindingSource acamDTOBindingSource;
     }
 }

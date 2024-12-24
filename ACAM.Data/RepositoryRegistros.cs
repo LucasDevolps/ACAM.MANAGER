@@ -810,6 +810,82 @@ namespace ACAM.Data
             return dataTable;
 
         }
+        public IEnumerable<AcamDTO> ConsultaBaseGeral(string dataInicial, string dataFinal, int documento)
+        {
+            try
+            {
+                builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                configuration = builder.Build();
+                string connectionString = configuration.GetConnectionString("DefaultConnection");
+
+                string queryFiltrar = @"
+                SELECT 
+                    Amount,
+                    Client,
+                    Pix_key,
+                    cpf_name,
+	                TrnDate,
+	                case 
+	                  when Pix_key is null then 0 
+	                  else 1 
+	                 end as Restrito,
+                    Id_arquivo
+                FROM  AcamData 
+                ";
+
+                if (dataInicial != "" && dataFinal != "")
+                {
+                    if (!queryFiltrar.ToLower().Contains("where"))
+                        queryFiltrar += " where TrnDate between '" + dataInicial + "' and '" + dataFinal + "' ";
+                    else
+                        queryFiltrar += " and TrnDate between '" + dataInicial + "' and '" + dataFinal + "' ";
+                }
+
+                if (!queryFiltrar.ToLower().Contains("where"))
+                    queryFiltrar += $" where id_arquivo = {documento}";
+                else
+                    queryFiltrar += $" and id_arquivo = {documento}";
+
+                var registrosFiltrados = new List<AcamDTO>();
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    using (var command = new SqlCommand(queryFiltrar, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var registro = new AcamDTO
+                                {
+                                    Client = reader["Client"].ToString(),
+                                    Pix_Key = reader["Pix_Key"].ToString(),
+                                    cpf_name = reader["cpf_name"].ToString(),
+                                    Amount = string.Format(CultureInfo.GetCultureInfo("pt-BR"), "R$ {0:#,###.##}", reader["Amount"]),
+                                    Id_file = int.Parse(reader["Id_arquivo"].ToString()),
+                                    TrnDate = reader["TrnDate"] as DateTime?,
+                                    restrito = int.Parse(reader["Restrito"].ToString())
+                                };
+
+                                registrosFiltrados.Add(registro);
+                            }
+                        }
+                    }
+                }
+                return registrosFiltrados;
+            }
+            catch (Exception ex)
+            {
+                var logger = new LoggerRepository();
+                logger.Log(ex);
+
+                return new List<AcamDTO>();
+            }
+
+            
+        }
     }
 
 }
