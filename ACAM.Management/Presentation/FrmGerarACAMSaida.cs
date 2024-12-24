@@ -53,6 +53,20 @@ namespace ACAM.Management.Presentation
         private void btnConsultar_Click(object sender, EventArgs e)
         {
 
+            try
+            {
+                _servicesRegistros.GerarRelatorioSaidaProcessamento(Convert.ToInt32(cmbArquivo.SelectedValue));
+
+                MessageBox.Show("Sucesso !");
+            }
+            catch (Exception ex)
+            {
+                var logger = new LoggerRepository();
+                logger.Log(ex);
+
+                MessageBox.Show(ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            
         }
     }
 }
