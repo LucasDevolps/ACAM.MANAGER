@@ -294,16 +294,16 @@ namespace ACAM.Data
 
             string queryFiltrar = @"
                 SELECT 
-                    a.Amount,
-                    a.Client,
-                    a.Pix_key,
-                    a.cpf_name,
-	                a.TrnDate,
+                    ar.Amount,
+                    ar.Client,
+                    ar.Pix_key,
+                    ar.cpf_name,
+	                ar.TrnDate,
 	                case 
 	                  when ar.Pix_key is null then 0 
 	                  else 1 
 	                 end as Restrito
-                FROM AcamData a left join Acam_Restritiva ar on ar.Client = a.Client and ar.Pix_key = a.Pix_key
+                FROM  Acam_Restritiva ar 
                 WHERE 
 	                case 
 	                  when ar.Pix_key is null then 0 
@@ -313,11 +313,11 @@ namespace ACAM.Data
 
             if (dataInicial != "" && dataFinal != "")
             {
-                queryFiltrar = queryFiltrar + " and a.TrnDate between '@dataIni' and '@dataFim' ";
+                queryFiltrar = queryFiltrar + " and ar.TrnDate between '" + dataInicial + "' and '" + dataFinal + "' ";
             }
             if (documento != "")
             {
-                queryFiltrar = queryFiltrar + " and a.Pix_key = '@doc' ";
+                queryFiltrar = queryFiltrar + " and replace(replace(replace(replace(ar.Pix_key,'.',''),',',''),'-',''),'/','') = '" + documento + "' ";
             }
 
             var registrosFiltrados = new List<AcamDTO>();
@@ -328,9 +328,9 @@ namespace ACAM.Data
 
                 using (var command = new SqlCommand(queryFiltrar, connection))
                 {
-                    command.Parameters.AddWithValue("@dataIni", dataInicial);
-                    command.Parameters.AddWithValue("@dataFim", dataFinal);
-                    command.Parameters.AddWithValue("@doc", documento);
+                    //command.Parameters.AddWithValue("@dataIni", dataInicial);
+                    //command.Parameters.AddWithValue("@dataFim", dataFinal);
+                    //command.Parameters.AddWithValue("@doc", documento);
 
                     using (var reader = command.ExecuteReader())
                     {
@@ -341,7 +341,7 @@ namespace ACAM.Data
                                 Client = reader["Client"].ToString(),
                                 Pix_Key = reader["Pix_Key"].ToString(),
                                 cpf_name = reader["cpf_name"].ToString(),
-                                Amount = reader["Amount"].ToString(),
+                                Amount = string.Format(CultureInfo.GetCultureInfo("pt-BR"), "R$ {0:#,###.##}", reader["Amount"]),
                                 TrnDate = reader["TrnDate"] as DateTime?,
                                 restrito = int.Parse(reader["Restrito"].ToString())
                             };

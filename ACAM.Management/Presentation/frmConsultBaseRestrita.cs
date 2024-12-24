@@ -23,21 +23,35 @@ namespace ACAM.Management.Presentation
         {
             try
             {
-                if (txtDataInicial.Text == "" && txtDataFinal.Text == "" && txtDocumento.Text == "")
+                string dataIni = "";
+                string datafim = "";
+                string documento = "";
+
+                if (txtDataInicial.Text == "  /  /" && txtDataFinal.Text == "  /  /" && txtDocumento.Text == "   ,   ,   -")
                 {
                     MessageBox.Show("Favor informar ao menos um dos filtros");
                     return;
                 }
 
-                if (txtDataInicial.Text != "" && txtDataFinal.Text != "")
+                if (txtDataInicial.Text != "  /  /" && txtDataFinal.Text != "  /  /")
                 {
                     if (DateTime.Parse(txtDataInicial.Text.ToString()) > DateTime.Parse(txtDataFinal.Text.ToString()))
                     {
                         MessageBox.Show("Data final não pode ser menor que a inicial");
                         return;
                     }
+
+                    dataIni = DateTime.Parse(txtDataInicial.Text).ToString("yyyyMMdd");
+                    datafim = DateTime.Parse(txtDataFinal.Text).ToString("yyyyMMdd");
                 }
-                var dados = _servicesRegistros.ConsultaBaseRestritra(txtDataInicial.Text.ToString(), txtDataFinal.Text.ToString(), txtDocumento.Text);
+
+                if (txtDocumento.Text != "   ,   ,   -")
+                {
+                    documento = txtDocumento.Text.Replace(".", "").Replace(",", "").Replace("/", "").Replace("-", "");
+                }
+
+
+                var dados = _servicesRegistros.ConsultaBaseRestritra(dataIni, datafim, documento);
 
                 grdTabela.DataSource = null;
                 grdTabela.DataSource = dados;
