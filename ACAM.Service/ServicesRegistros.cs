@@ -21,7 +21,7 @@ namespace ACAM.Service
         }
         public void SalvarNoBanco(List<AcamDTO> buffer, int idArquivo)
         {
-            _repository.SalvarNoBanco(buffer,idArquivo);
+            _repository.SalvarNoBanco(buffer);
         }
         public IEnumerable<AcamDTO> FiltrarRegistrosPorValor(decimal valorMinimo, int idFile)
         {
@@ -35,7 +35,7 @@ namespace ACAM.Service
 
         public void SalvarNaTabelaRestritiva(decimal valorMaximo, int idFile)
         {
-            _repository.salvarNaTabelaRestritiva(valorMaximo, idFile);
+            _repository.SalvarNaTabelaRestritiva(valorMaximo, idFile);
         }
 
         public void GerarRelatorioSaidaProcessamento(int idFile)

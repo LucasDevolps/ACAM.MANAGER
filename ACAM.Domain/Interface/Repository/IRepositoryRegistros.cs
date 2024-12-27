@@ -7,8 +7,8 @@ namespace ACAM.Domain.Interface.Repository
     {
         void ProcessarCsvPorStreaming(string caminhoCsv, int idArquivo);
 
-        void SalvarNoBanco(List<AcamDTO> buffer, int idArquivo);
-        void salvarNaTabelaRestritiva(decimal valorMaximo, int idFile);
+        void SalvarNoBanco(List<AcamDTO> buffer);
+        void SalvarNaTabelaRestritiva(decimal valorMaximo, int idFile);
         void GerarRelatorioSaidaProcessamento(int idFile);
         DataTable GerarRelatorioVisualTotal(int idFile);
 
@@ -20,8 +20,8 @@ namespace ACAM.Domain.Interface.Repository
 
         DataTable ListarArquivosJaProcessadosDoBanco();
 
-       IEnumerable<AcamDTO> ConsultaBaseRestritra(string dataInicial, string dataFinal, string documento);
+        IEnumerable<AcamDTO> ConsultaBaseGeral(string dataInicial, string dataFinal, int documento);
 
-       IEnumerable<AcamDTO> ConsultaBaseGeral(string dataInicial, string dataFinal, int documento);
+        IEnumerable<AcamDTO> ConsultaBaseRestritra(string dataInicial, string dataFinal, string documento);
     }
 }

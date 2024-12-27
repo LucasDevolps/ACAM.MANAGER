@@ -93,8 +93,7 @@ namespace ACAM.Management.Presentation
                     {
                         var filePath = (AcamFilesDto)listFileAcams.Items[i];
 
-                        int idFile = await _serviceArquivo.InicioDoProcessoArquivo(connectionString, filePath.FilePath);
-
+                        int idFile = await _serviceArquivo.InicioDoProcessoArquivo(filePath.FilePath);
                         // Processar os arquivos de forma assíncrona
                         await Task.Run(() =>
                         {

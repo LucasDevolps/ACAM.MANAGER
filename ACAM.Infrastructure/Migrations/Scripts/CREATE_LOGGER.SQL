@@ -1,6 +1,5 @@
-CREATE TABLE LOGGER
-(
-	loggerId INT IDENTITY(1,1) PRIMARY KEY, 
-	mensagem  varchar(max),
-	stack    varchar(max)
+CREATE TABLE logger (
+    logger_id SERIAL PRIMARY KEY, 
+    mensagem TEXT,               
+    stack TEXT                   
 );

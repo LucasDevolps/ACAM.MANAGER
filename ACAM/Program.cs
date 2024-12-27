@@ -49,7 +49,7 @@ internal class Program
                 {
                     Console.WriteLine($"Processando arquivo: {arquivo}");
 
-                    int idFile = await _serviceArquivo.InicioDoProcessoArquivo(connectionString, arquivo);
+                    int idFile = await _serviceArquivo.InicioDoProcessoArquivo(arquivo);
                     _servicesRegistros.ProcessarCsvPorStreaming(arquivo, idFile);
 
                     _servicesRegistros.FiltrarRegistrosPorValor(45000, idFile);

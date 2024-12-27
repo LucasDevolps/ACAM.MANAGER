@@ -1,17 +1,30 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Npgsql; // Biblioteca para PostgreSQL
 using ACAM.Domain.Interface.Repository;
-
 
 namespace ACAM.Data
 {
     public class RepositoryArquivo : IRepositoryArquivo
     {
-        public async Task<int> InicioDoProcessoArquivo(string connectionString, string localDoArquivo)
+        private string _connectionString = string.Empty;
+
+        public RepositoryArquivo()
         {
-            using (var connection = new SqlConnection(connectionString))
+            var builder = new ConfigurationBuilder();
+            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            var configuration = builder.Build();
+            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? "";
+        }
+
+        public async Task<int> InicioDoProcessoArquivo(string localDoArquivo)
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
-                connection.Open();
-                using (var transaction = connection.BeginTransaction())
+                await connection.OpenAsync();
+                using (var transaction = await connection.BeginTransactionAsync())
                 {
                     try
                     {
@@ -20,11 +33,10 @@ namespace ACAM.Data
                         await InserirArquivo(nomeArquivo, connection, transaction);
 
                         return await RecuperarIdArquivo(nomeArquivo, connection, transaction);
-
                     }
                     catch (Exception ex)
                     {
-                        transaction.Rollback();
+                        await transaction.RollbackAsync();
                         var logger = new LoggerRepository();
                         logger.Log(ex);
                         return 0;
@@ -32,18 +44,19 @@ namespace ACAM.Data
                 }
             }
         }
-        public async Task InserirArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
+
+        public async Task InserirArquivo(string nomeArquivo, NpgsqlConnection connection, NpgsqlTransaction transaction)
         {
             try
             {
                 string query = @"
-                INSERT INTO AcamArquivo (Nome_arquivo)
-                VALUES (@Nome_arquivo)";
+                    INSERT INTO AcamArquivo (nome_arquivo)
+                    VALUES (@Nome_arquivo)";
 
-                using (var command = new SqlCommand(query, connection, transaction))
+                using (var command = new NpgsqlCommand(query, connection, transaction))
                 {
                     command.Parameters.AddWithValue("@Nome_arquivo", nomeArquivo);
-                    await command.ExecuteScalarAsync();
+                    await command.ExecuteNonQueryAsync();
                 }
 
                 await transaction.CommitAsync();
@@ -52,20 +65,21 @@ namespace ACAM.Data
             {
                 var logger = new LoggerRepository();
                 logger.Log(ex);
+                throw; // Re-throw para propagar a exceção
             }
         }
 
-        public async Task<int> RecuperarIdArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
+        public async Task<int> RecuperarIdArquivo(string nomeArquivo, NpgsqlConnection connection, NpgsqlTransaction transaction)
         {
             try
             {
                 string query = @"
-                    SELECT Id_arquivo
+                    SELECT id_arquivo
                     FROM AcamArquivo
-                    WHERE Nome_arquivo = @Nome_arquivo
-                      AND CAST(Data_importacao AS DATE) = CAST(GETDATE() AS DATE)";
+                    WHERE nome_arquivo = @Nome_arquivo
+                      AND CAST(data_importacao AS DATE) = CURRENT_DATE";
 
-                using (var command = new SqlCommand(query, connection, transaction))
+                using (var command = new NpgsqlCommand(query, connection, transaction))
                 {
                     command.Parameters.AddWithValue("@Nome_arquivo", nomeArquivo);
 
@@ -76,7 +90,7 @@ namespace ACAM.Data
                     }
                     else
                     {
-                        throw new InvalidOperationException("Não foi possível recuperar o Id_arquivo para o arquivo inserido.");
+                        throw new InvalidOperationException("Não foi possível recuperar o id_arquivo para o arquivo inserido.");
                     }
                 }
             }

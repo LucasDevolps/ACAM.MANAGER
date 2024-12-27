@@ -1,5 +1,6 @@
 ﻿using ACAM.Domain.Interface.Repository;
 using Microsoft.Data.SqlClient;
+using Npgsql;
 
 namespace ACAM.Data
 {
@@ -7,7 +8,7 @@ namespace ACAM.Data
     {
         public void VerificarOuCriarTabela(string connectionString, string caminhoSql, string tabela)
         {
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = new NpgsqlConnection(connectionString))
             {
                 connection.Open();
 
@@ -18,14 +19,14 @@ namespace ACAM.Data
                     END
                 ";
 
-                using (var command = new SqlCommand(checkTableQuery, connection))
+                using (var command = new NpgsqlCommand(checkTableQuery, connection))
                 {
                     var result = command.ExecuteScalar();
                     if (result != null && Convert.ToInt32(result) == 1)
                     {
                         string createTableScript = File.ReadAllText(caminhoSql);
 
-                        using (var createCommand = new SqlCommand(createTableScript, connection))
+                        using (var createCommand = new NpgsqlCommand(createTableScript, connection))
                         {
                             createCommand.ExecuteNonQuery();
                             Console.WriteLine($"Tabela {tabela} criada com sucesso!");

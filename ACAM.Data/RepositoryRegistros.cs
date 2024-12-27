@@ -6,6 +6,7 @@ using CsvHelper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Win32;
+using Npgsql;
 using System.Data;
 using System.Globalization;
 using System.Transactions;
@@ -14,24 +15,30 @@ namespace ACAM.Data
 {
     public class RepositoryRegistros : IRepositoryRegistros
     {
-        private ConfigurationBuilder builder = new ConfigurationBuilder();
-
-        private IConfiguration configuration;
-
+        private readonly IConfiguration _configuration;
+        private readonly string _connectionString;
+        private readonly string _caminhoImportacaoLocal;
         private string _NOME_RELATORIO;
+
+        public RepositoryRegistros()
+        {
+            var builder = new ConfigurationBuilder();
+            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            _configuration = builder.Build();
+            _connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
+            _caminhoImportacaoLocal = _configuration["Configuracoes:CaminhoLocal"] ?? string.Empty;
+        }
         public void ProcessarCsvPorStreaming(string caminhoCsv, int idArquivo)
         {
             using (var reader = new StreamReader(caminhoCsv))
             using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
-                // Configurar o mapeamento
                 csv.Context.RegisterClassMap<AcamDtoMap>();
 
-                // Ignorar o cabeçalho
-                csv.Read();
+                csv.Read(); // Ignorar cabeçalho
                 csv.ReadHeader();
 
-                List<AcamDTO> buffer = new List<AcamDTO>();
+                var buffer = new List<AcamDTO>();
                 while (csv.Read())
                 {
                     var registro = csv.GetRecord<AcamDTO>();
@@ -40,41 +47,34 @@ namespace ACAM.Data
 
                     if (buffer.Count == 1000)
                     {
-                        SalvarNoBanco(buffer, idArquivo);
+                        SalvarNoBanco(buffer);
                         buffer.Clear();
                     }
                 }
-                // Processar os registros restantes
+
                 if (buffer.Count > 0)
                 {
-                    SalvarNoBanco(buffer, idArquivo);
+                    SalvarNoBanco(buffer);
                 }
-
             }
         }
-        public void SalvarNoBanco(List<AcamDTO> buffer, int idArquivo)
+        public void SalvarNoBanco(List<AcamDTO> buffer)
         {
             try
             {
-                builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                configuration = builder.Build();
-                string connectionString = configuration.GetConnectionString("DefaultConnection");
-
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(_connectionString))
                 {
                     connection.Open();
 
-                    using (var bulkCopy = new SqlBulkCopy(connection))
+                    using (var transaction = connection.BeginTransaction())
                     {
-                        bulkCopy.DestinationTableName = "AcamData";
-
                         var table = new DataTable();
                         table.Columns.Add("Client", typeof(string));
                         table.Columns.Add("Pix_Key", typeof(string));
                         table.Columns.Add("cpf_name", typeof(string));
                         table.Columns.Add("Amount", typeof(decimal));
                         table.Columns.Add("TrnDate", typeof(DateTime));
-                        table.Columns.Add("Id_file", typeof(int));
+                        table.Columns.Add("id_arquivo", typeof(int));
 
                         foreach (var registro in buffer)
                         {
@@ -84,12 +84,24 @@ namespace ACAM.Data
                                 registro.cpf_name,
                                 decimal.TryParse(registro.Amount, out var amount) ? amount : (object)DBNull.Value,
                                 registro.TrnDate,
-                                registro.Id_file = idArquivo
+                                registro.Id_file
                             );
                         }
 
-                        // Envia os dados para o banco
-                        bulkCopy.WriteToServer(table);
+                        using (var writer = connection.BeginBinaryImport("COPY AcamData (Client, Pix_Key, cpf_name, Amount, TrnDate, id_arquivo) FROM STDIN (FORMAT BINARY)"))
+                        {
+                            foreach (DataRow row in table.Rows)
+                            {
+                                writer.StartRow();
+                                for (int i = 0; i < table.Columns.Count; i++)
+                                {
+                                    writer.Write(row[i]);
+                                }
+                            }
+                            writer.Complete();
+                        }
+
+                        transaction.Commit();
                     }
                 }
             }
@@ -99,37 +111,32 @@ namespace ACAM.Data
                 logger.Log(ex);
             }
         }
-        public void salvarNaTabelaRestritiva(decimal valorMaximo, int idFile)
+        public void SalvarNaTabelaRestritiva(decimal valorMaximo, int idFile)
         {
+            string queryTruncar = "TRUNCATE TABLE Acam_Restritiva";
 
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            configuration = builder.Build();
-            string connectionString = configuration.GetConnectionString("DefaultConnection");
-
-            string queryTrucar = "TRUNCATE TABLE Acam_Restritiva";
-
-            string queryFiltrar = @"               
-                SELECT 
-                    SUM(Amount) AS TotalAmount,
-                    Client,
-                    Pix_key,
-                    cpf_name,
-                    getdate() as TrnDate
-                FROM AcamData
-                WHERE trndate >= DATEADD(day, -365, GETDATE())
-                GROUP BY 
-                    Client,
-                    Pix_key,
-                    cpf_name
-                HAVING SUM(Amount) > @valorMaximo;";
+            string queryFiltrar = @"
+        SELECT 
+            SUM(Amount) AS TotalAmount,
+            Client,
+            Pix_Key,
+            cpf_name,
+            CURRENT_DATE AS TrnDate
+        FROM AcamData
+        WHERE TrnDate >= CURRENT_DATE - INTERVAL '365 days'
+        GROUP BY 
+            Client,
+            Pix_Key,
+            cpf_name
+        HAVING SUM(Amount) > @valorMaximo";
 
             string queryInserir = @"
-                INSERT INTO Acam_Restritiva (Client, Pix_Key, cpf_name, Amount, TrnDate, Id_arquivo)
-                VALUES (@Client, @Pix_Key, @cpf_name, @Amount, @TrnDate, @Id_arquivo)";
+        INSERT INTO Acam_Restritiva (Client, Pix_Key, cpf_name, Amount, TrnDate, Id_arquivo)
+        VALUES (@Client, @Pix_Key, @cpf_name, @Amount, @TrnDate, @Id_arquivo)";
 
-            var arquivosProcessados = new List<string>();
+            var registrosFiltrados = new List<AcamDTO>();
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
                 connection.Open();
 
@@ -137,17 +144,14 @@ namespace ACAM.Data
                 {
                     try
                     {
-
-                        using (var truncCommand = new SqlCommand(queryTrucar, connection, transaction))
+                        // Truncate table
+                        using (var truncCommand = new NpgsqlCommand(queryTruncar, connection, transaction))
                         {
                             truncCommand.ExecuteNonQuery();
                         }
 
-
-                        var registrosFiltrados = new List<AcamDTO>();
-                        var registrosNaoInseridos = new List<AcamDTO>();
-
-                        using (var command = new SqlCommand(queryFiltrar, connection, transaction))
+                        // Filtrar registros
+                        using (var command = new NpgsqlCommand(queryFiltrar, connection, transaction))
                         {
                             command.Parameters.AddWithValue("@valorMaximo", valorMaximo);
 
@@ -172,13 +176,13 @@ namespace ACAM.Data
                         // Inserir os registros na tabela restritiva
                         foreach (var registro in registrosFiltrados)
                         {
-                            using (var insertCommand = new SqlCommand(queryInserir, connection, transaction))
+                            using (var insertCommand = new NpgsqlCommand(queryInserir, connection, transaction))
                             {
                                 insertCommand.Parameters.AddWithValue("@Client", registro.Client);
                                 insertCommand.Parameters.AddWithValue("@Pix_Key", registro.Pix_Key);
                                 insertCommand.Parameters.AddWithValue("@cpf_name", registro.cpf_name);
 
-                                // Converter o Amount para decimal ou passar DBNull se inválido
+                                // Converter Amount para decimal ou passar DBNull se inválido
                                 if (decimal.TryParse(registro.Amount, NumberStyles.Any, new CultureInfo("pt-BR"), out var amount))
                                 {
                                     insertCommand.Parameters.AddWithValue("@Amount", amount);
@@ -195,9 +199,7 @@ namespace ACAM.Data
                             }
                         }
 
-
                         transaction.Commit();
-
                     }
                     catch (Exception ex)
                     {
@@ -207,15 +209,12 @@ namespace ACAM.Data
                 }
             }
         }
+
         public void GerarRelatorioSaidaProcessamento(int idFile)
         {
             try
             {
                 _NOME_RELATORIO = NomeDoRelatorio();
-
-                builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                configuration = builder.Build();
-                string connectionString = configuration.GetConnectionString("DefaultConnection");
 
                 string queryFiltrar = @"
                 SELECT 
@@ -234,14 +233,14 @@ namespace ACAM.Data
 
                 var arquivosProcessados = new List<string>();
 
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(_connectionString))
                 {
                     connection.Open();
 
                     var registrosFiltrados = new List<AcamDTO>();
                     var registrosNaoInseridos = new List<AcamDTO>();
 
-                    using (var command = new SqlCommand(queryFiltrar, connection))
+                    using (var command = new NpgsqlCommand(queryFiltrar, connection))
                     {
                         command.Parameters.AddWithValue("@idFile", idFile);
 
@@ -284,13 +283,9 @@ namespace ACAM.Data
                 logger.Log(ex);
             }
         }
-
         public IEnumerable<AcamDTO> ConsultaBaseRestritra(string dataInicial, string dataFinal, string documento)
         {
 
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            configuration = builder.Build();
-            string connectionString = configuration.GetConnectionString("DefaultConnection");
 
             string queryFiltrar = @"
                 SELECT 
@@ -322,11 +317,11 @@ namespace ACAM.Data
 
             var registrosFiltrados = new List<AcamDTO>();
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
                 connection.Open();
 
-                using (var command = new SqlCommand(queryFiltrar, connection))
+                using (var command = new NpgsqlCommand(queryFiltrar, connection))
                 {
                     //command.Parameters.AddWithValue("@dataIni", dataInicial);
                     //command.Parameters.AddWithValue("@dataFim", dataFinal);
@@ -361,24 +356,19 @@ namespace ACAM.Data
         {
             try
             {
-                builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                configuration = builder.Build();
-                string connectionString = configuration.GetConnectionString("DefaultConnection");
-
-
                 string query = @"
-                SELECT Client, Pix_Key, cpf_name, Amount, TrnDate
-                FROM AcamData
-                WHERE Amount >= @valorMinimo
-                  AND Id_arquivo = @idFile
-                  AND TrnDate >= DATEADD(DAY, -365, GETDATE())";
+                    SELECT Client, Pix_Key, cpf_name, Amount, TrnDate
+                    FROM AcamData
+                    WHERE Amount >= @valorMinimo
+                      AND Id_file = @idFile
+                      AND TrnDate >= CURRENT_DATE - INTERVAL '365 days'";
 
                 var registros = new List<AcamDTO>();
 
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(_connectionString))
                 {
                     connection.Open();
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new NpgsqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@valorMinimo", valorMinimo);
                         command.Parameters.AddWithValue("@idFile", idFile);
@@ -409,13 +399,10 @@ namespace ACAM.Data
                 return new List<AcamDTO>();
             }
         }
+
         public void InserirNaTabelaRestritiva(decimal valorMinimo, int idFile)
         {
             _NOME_RELATORIO = NomeDoRelatorio();
-
-            builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            configuration = builder.Build();
-            string connectionString = configuration.GetConnectionString("DefaultConnection");
 
             string queryFiltrar = @"
                 SELECT Client, Pix_Key, cpf_name, Amount, TrnDate
@@ -437,7 +424,7 @@ namespace ACAM.Data
 
             var arquivosProcessados = new List<string>();
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
                 connection.Open();
 
@@ -446,14 +433,14 @@ namespace ACAM.Data
                     try
                     {
 
-                        using (var truncCommand = new SqlCommand(queryTrucar, connection, transaction))
+                        using (var truncCommand = new NpgsqlCommand(queryTrucar, connection, transaction))
                         {
                             truncCommand.ExecuteNonQuery();
                         }
                         var registrosFiltrados = new List<AcamDTO>();
                         var registrosNaoInseridos = new List<AcamDTO>();
 
-                        using (var command = new SqlCommand(queryFiltrar, connection, transaction))
+                        using (var command = new NpgsqlCommand(queryFiltrar, connection, transaction))
                         {
                             command.Parameters.AddWithValue("@valorMinimo", valorMinimo);
                             command.Parameters.AddWithValue("@idFile", idFile);
@@ -485,7 +472,7 @@ namespace ACAM.Data
 
                         if(registrosNaoInseridos.Count == 0)
                         {
-                            using (var command = new SqlCommand(queryFiltrarTudo, connection, transaction))
+                            using (var command = new NpgsqlCommand(queryFiltrarTudo, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("@idFile", idFile);
 
@@ -511,7 +498,7 @@ namespace ACAM.Data
                         // Inserir os registros na tabela restritiva
                         foreach (var registro in registrosFiltrados)
                         {
-                            using (var insertCommand = new SqlCommand(queryInserir, connection, transaction))
+                            using (var insertCommand = new NpgsqlCommand(queryInserir, connection, transaction))
                             {
                                 insertCommand.Parameters.AddWithValue("@Client", registro.Client);
                                 insertCommand.Parameters.AddWithValue("@Pix_Key", registro.Pix_Key);
@@ -562,7 +549,7 @@ namespace ACAM.Data
         {
             try
             {
-                string caminhoImportacao = configuration["Configuracoes:CaminhoLocal"];
+                string caminhoImportacao = _caminhoImportacaoLocal;
                 string pastaRelatorios = Path.Combine(caminhoImportacao, "processados", "relatorios");
 
                 if (!Directory.Exists(pastaRelatorios))
@@ -592,8 +579,7 @@ namespace ACAM.Data
         {
             try
             {
-                string caminhoImportacao = configuration["Configuracoes:CaminhoLocal"];
-                string pastaRelatorios = Path.Combine(caminhoImportacao, "processados", "relatorios");
+                string pastaRelatorios = Path.Combine(_caminhoImportacaoLocal, "processados", "relatorios");
 
                 if (!Directory.Exists(pastaRelatorios))
                 {
@@ -624,10 +610,6 @@ namespace ACAM.Data
         {
             try
             {
-                var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
-                string connectionString = configuration.GetConnectionString("DefaultConnection");
-
                 DataTable dataTable = new DataTable();
 
                 string query = @"
@@ -638,14 +620,14 @@ namespace ACAM.Data
                                     Amount, 
                                     TrnDate,
                                     Id_arquivo
-                                FROM [dbo].[AcamData]
+                                FROM AcamData
                                 WHERE id_arquivo = @Id_arquivo";
 
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(_connectionString))
                 {
                     connection.Open();
 
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new NpgsqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Id_arquivo", idFile);
 
@@ -671,18 +653,16 @@ namespace ACAM.Data
             var registros = new List<AcamDTO>();
             string query = @"
                                 SELECT Client, Pix_Key, cpf_name, Amount, TrnDate
-                                FROM [dbo].[AcamData]
+                                FROM AcamData
                                 WHERE id_arquivo = @Id_arquivo";
 
             try
             {
-                string connectionString = configuration.GetConnectionString("DefaultConnection");
-
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(_connectionString))
                 {
                     connection.Open();
 
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new NpgsqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Id_arquivo", idArquivo);
 
@@ -739,10 +719,6 @@ namespace ACAM.Data
         {
             try
             {
-                var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                var configuration = builder.Build();
-                string connectionString = configuration.GetConnectionString("DefaultConnection");
-
                 DataTable dataTable = new DataTable();
 
                 string query = @"
@@ -753,14 +729,14 @@ namespace ACAM.Data
                                     Amount, 
                                     TrnDate,
                                     Id_arquivo
-                                FROM [dbo].[Acam_Restritiva]
+                                FROM Acam_Restritiva
                                 WHERE id_arquivo = @Id_arquivo";
 
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(_connectionString))
                 {
                     connection.Open();
 
-                    using (var command = new SqlCommand(query, connection))
+                    using (var command = new NpgsqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Id_arquivo", idFile);
 
@@ -783,23 +759,19 @@ namespace ACAM.Data
         }
         public DataTable ListarArquivosJaProcessadosDoBanco()
         {
-            var builder = new ConfigurationBuilder().AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-            var configuration = builder.Build();
-            string connectionString = configuration.GetConnectionString("DefaultConnection");
-
             DataTable dataTable = new DataTable();
 
             string query = @"SELECT
                                 Id_arquivo,
                                 Nome_arquivo
-                            FROM[dbo].[AcamArquivo]";
+                            FROM AcamArquivo";
 
 
-            using (var connection = new SqlConnection(connectionString))
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
                 connection.Open();
 
-                using (var command = new SqlCommand(query, connection))
+                using (var command = new NpgsqlCommand(query, connection))
                 {
                     using (var reader = command.ExecuteReader())
                     {
@@ -814,10 +786,6 @@ namespace ACAM.Data
         {
             try
             {
-                builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-                configuration = builder.Build();
-                string connectionString = configuration.GetConnectionString("DefaultConnection");
-
                 string queryFiltrar = @"
                 SELECT 
                     Amount,
@@ -848,11 +816,11 @@ namespace ACAM.Data
 
                 var registrosFiltrados = new List<AcamDTO>();
 
-                using (var connection = new SqlConnection(connectionString))
+                using (var connection = new NpgsqlConnection(_connectionString))
                 {
                     connection.Open();
 
-                    using (var command = new SqlCommand(queryFiltrar, connection))
+                    using (var command = new NpgsqlCommand(queryFiltrar, connection))
                     {
                         using (var reader = command.ExecuteReader())
                         {

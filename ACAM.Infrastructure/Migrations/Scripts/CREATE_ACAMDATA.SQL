@@ -1,18 +1,25 @@
 CREATE TABLE AcamData (
-    Client   VARCHAR(255),
-    Pix_Key  VARCHAR(255),
+    client VARCHAR(255),
+    pix_key VARCHAR(255),
     cpf_name VARCHAR(255),
-    Amount   DECIMAL(20,2),
-    TrnDate  DATETIME NULL
+    amount NUMERIC(20,2), 
+    trndate TIMESTAMP NULL 
 );
 
-CREATE NONCLUSTERED INDEX IX_AcamData_Client_PixKey_CpfName
-ON AcamData (Client, Pix_Key, cpf_name);
+CREATE INDEX IX_AcamData_Client_PixKey_CpfName
+ON AcamData (client, pix_key, cpf_name);
 
 ALTER TABLE AcamData
-ADD Id_arquivo INT; -- Coluna para armazenar a chave estrangeira
+ADD COLUMN id_arquivo INT;
 
--- Adicionar chave estrangeira vinculada à tabela AcamArquivo
+CREATE TABLE AcamArquivo (
+    id_arquivo SERIAL PRIMARY KEY, 
+    nome_arquivo VARCHAR(255) NOT NULL,
+    data_importacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP 
+);
+
+CREATE INDEX IX_AcamArquivo_Nome_arquivo ON AcamArquivo (nome_arquivo);
+
 ALTER TABLE AcamData
-ADD CONSTRAINT FK_AcamData_AcamArquivo FOREIGN KEY (Id_arquivo)
-REFERENCES AcamArquivo (Id_arquivo);
+ADD CONSTRAINT fk_acamdata_acamarquivo FOREIGN KEY (id_arquivo)
+REFERENCES AcamArquivo (id_arquivo);

@@ -1,18 +1,18 @@
 CREATE TABLE Acam_Restritiva (
-    Client   VARCHAR(255),
-    Pix_Key  VARCHAR(255),
+    client VARCHAR(255),
+    pix_key VARCHAR(255),
     cpf_name VARCHAR(255),
-    Amount   DECIMAL(20,2),
-    TrnDate  DATETIME NULL
+    amount NUMERIC(20,2), 
+    trndate TIMESTAMP NULL 
 );
 
-CREATE NONCLUSTERED INDEX IX_Acam_Restritiva_Client_PixKey_CpfName
-ON AcamData (Client, Pix_Key, cpf_name);
+-- Criar índice
+CREATE INDEX IX_Acam_Restritiva_Client_PixKey_CpfName
+ON Acam_Restritiva (client, pix_key, cpf_name);
 
 ALTER TABLE Acam_Restritiva
-ADD Id_arquivo INT; -- Coluna para armazenar a chave estrangeira
+ADD COLUMN id_arquivo INT;
 
--- Adicionar chave estrangeira vinculada à tabela AcamArquivo
 ALTER TABLE Acam_Restritiva
-ADD CONSTRAINT FK_Acam_Restritiva_AcamArquivo FOREIGN KEY (Id_arquivo)
-REFERENCES AcamArquivo (Id_arquivo);
+ADD CONSTRAINT fk_acam_restritiva_acamarquivo FOREIGN KEY (id_arquivo)
+REFERENCES AcamArquivo (id_arquivo);
