@@ -32,17 +32,18 @@
             mnuSystem = new MenuStrip();
             arquivoToolStripMenuItem = new ToolStripMenuItem();
             mnuImportarACAM = new ToolStripMenuItem();
+            lblImportarEConverter = new ToolStripMenuItem();
+            mnuImportarPPE = new ToolStripMenuItem();
             toolStripSeparator = new ToolStripSeparator();
             mnuConsultaBaseCentral = new ToolStripMenuItem();
             mnuConsultaBaseRestrira = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
             mnuGerarAcamProcessada = new ToolStripMenuItem();
+            toolStripSeparator3 = new ToolStripSeparator();
+            Configuracoes = new ToolStripMenuItem();
             toolStripSeparator2 = new ToolStripSeparator();
             sairToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1 = new StatusStrip();
-            mnuImportarPPE = new ToolStripMenuItem();
-            toolStripSeparator3 = new ToolStripSeparator();
-            Configuracoes = new ToolStripMenuItem();
             mnuSystem.SuspendLayout();
             SuspendLayout();
             // 
@@ -57,7 +58,7 @@
             // 
             // arquivoToolStripMenuItem
             // 
-            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, mnuImportarPPE, toolStripSeparator, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator3, Configuracoes, toolStripSeparator2, sairToolStripMenuItem });
+            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, lblImportarEConverter, mnuImportarPPE, toolStripSeparator, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator3, Configuracoes, toolStripSeparator2, sairToolStripMenuItem });
             arquivoToolStripMenuItem.Name = "arquivoToolStripMenuItem";
             arquivoToolStripMenuItem.Size = new Size(60, 20);
             arquivoToolStripMenuItem.Text = "&Sistema";
@@ -71,6 +72,24 @@
             mnuImportarACAM.Size = new Size(243, 22);
             mnuImportarACAM.Text = "&Importar";
             mnuImportarACAM.Click += mnuImportarACAM_Click;
+            // 
+            // lblImportarEConverter
+            // 
+            lblImportarEConverter.Image = (Image)resources.GetObject("lblImportarEConverter.Image");
+            lblImportarEConverter.ImageTransparentColor = Color.Magenta;
+            lblImportarEConverter.Name = "lblImportarEConverter";
+            lblImportarEConverter.ShortcutKeys = Keys.Control | Keys.S;
+            lblImportarEConverter.Size = new Size(243, 22);
+            lblImportarEConverter.Text = "Converter XLS";
+            lblImportarEConverter.Click += lblImportarEConverter_Click;
+            // 
+            // mnuImportarPPE
+            // 
+            mnuImportarPPE.Image = (Image)resources.GetObject("mnuImportarPPE.Image");
+            mnuImportarPPE.ImageTransparentColor = Color.Magenta;
+            mnuImportarPPE.Name = "mnuImportarPPE";
+            mnuImportarPPE.Size = new Size(243, 22);
+            mnuImportarPPE.Text = "&Importar PPE";
             // 
             // toolStripSeparator
             // 
@@ -109,6 +128,19 @@
             mnuGerarAcamProcessada.Text = "&Gerar ACAM Processada";
             mnuGerarAcamProcessada.Click += mnuGerarAcamProcessada_Click;
             // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(240, 6);
+            // 
+            // Configuracoes
+            // 
+            Configuracoes.Image = Properties.Resources.Operacional;
+            Configuracoes.Name = "Configuracoes";
+            Configuracoes.Size = new Size(243, 22);
+            Configuracoes.Text = "Configurações";
+            Configuracoes.Click += Configuracoes_Click;
+            // 
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
@@ -127,27 +159,6 @@
             statusStrip1.Size = new Size(900, 22);
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
-            // 
-            // mnuImportarPPE
-            // 
-            mnuImportarPPE.Image = (Image)resources.GetObject("mnuImportarPPE.Image");
-            mnuImportarPPE.ImageTransparentColor = Color.Magenta;
-            mnuImportarPPE.Name = "mnuImportarPPE";
-            mnuImportarPPE.Size = new Size(243, 22);
-            mnuImportarPPE.Text = "&Importar PPE";
-            // 
-            // toolStripSeparator3
-            // 
-            toolStripSeparator3.Name = "toolStripSeparator3";
-            toolStripSeparator3.Size = new Size(240, 6);
-            // 
-            // Configuracoes
-            // 
-            Configuracoes.Image = Properties.Resources.Operacional;
-            Configuracoes.Name = "Configuracoes";
-            Configuracoes.Size = new Size(243, 22);
-            Configuracoes.Text = "Configurações";
-            Configuracoes.Click += Configuracoes_Click;
             // 
             // FrmSys
             // 
@@ -185,5 +196,6 @@
         private ToolStripMenuItem mnuImportarPPE;
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripMenuItem Configuracoes;
+        private ToolStripMenuItem lblImportarEConverter;
     }
 }

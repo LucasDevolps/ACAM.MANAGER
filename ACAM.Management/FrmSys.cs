@@ -38,5 +38,11 @@ namespace ACAM.Management
             FrmConfiguracao objForm = new FrmConfiguracao();
             objForm.ShowDialog(this);
         }
+
+        private void lblImportarEConverter_Click(object sender, EventArgs e)
+        {
+            frmImportarEConverter objForm = new frmImportarEConverter();
+            objForm.ShowDialog(this);
+        }
     }
 }

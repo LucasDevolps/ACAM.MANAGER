@@ -74,6 +74,8 @@ namespace ACAM.Management.Presentation
             {
                 var logger = new LoggerRepository();
                 logger.Log(ex);
+
+                MessageBox.Show(ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -181,6 +183,9 @@ namespace ACAM.Management.Presentation
             }
             catch (Exception ex)
             {
+
+                var logger = new LoggerRepository();
+                logger.Log(ex);
 
                 MessageBox.Show(ex.Message, "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }

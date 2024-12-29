@@ -30,6 +30,7 @@
         {
             components = new System.ComponentModel.Container();
             groupBox1 = new GroupBox();
+            progressBar1 = new ProgressBar();
             chkSelTodos = new CheckBox();
             btnProcessar = new Button();
             listFileAcams = new CheckedListBox();
@@ -54,7 +55,6 @@
             idfileDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             restritoDataGridViewTextBoxColumn1 = new DataGridViewTextBoxColumn();
             acamDTOBindingSource1 = new BindingSource(components);
-            progressBar1 = new ProgressBar();
             groupBox1.SuspendLayout();
             tabImport.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -76,6 +76,13 @@
             groupBox1.Size = new Size(875, 145);
             groupBox1.TabIndex = 0;
             groupBox1.TabStop = false;
+            // 
+            // progressBar1
+            // 
+            progressBar1.Location = new Point(663, 115);
+            progressBar1.Name = "progressBar1";
+            progressBar1.Size = new Size(100, 23);
+            progressBar1.TabIndex = 2;
             // 
             // chkSelTodos
             // 
@@ -255,13 +262,6 @@
             // acamDTOBindingSource1
             // 
             acamDTOBindingSource1.DataSource = typeof(Domain.DTOs.AcamDTO);
-            // 
-            // progressBar1
-            // 
-            progressBar1.Location = new Point(769, 117);
-            progressBar1.Name = "progressBar1";
-            progressBar1.Size = new Size(100, 23);
-            progressBar1.TabIndex = 2;
             // 
             // frmImportAcam
             // 
