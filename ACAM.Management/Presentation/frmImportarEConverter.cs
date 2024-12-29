@@ -99,6 +99,8 @@ namespace ACAM.Management.Presentation
 
         private void btnProcessar_Click(object sender, EventArgs e)
         {
+            progressBar.Visible = true;
+            btnProcessar.Enabled = false;
             try
             {
                 // Configura o contexto de licença da EPPlus
@@ -120,7 +122,7 @@ namespace ACAM.Management.Presentation
                     }
                 }
 
-                MessageBox.Show("Arquivos convertidos com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //MessageBox.Show("Arquivos convertidos com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -129,11 +131,18 @@ namespace ACAM.Management.Presentation
 
                 MessageBox.Show($"Erro ao processar os arquivos: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                progressBar.Visible = false;
+                btnProcessar.Enabled = true;
+            }
         }
 
 
         private void ConvertExcelToCsv(string inputFilePath, string outputDirectory)
         {
+            bool linhasIgnoradas = false; // Flag para rastrear se houve linhas ignoradas
+
             using (var package = new OfficeOpenXml.ExcelPackage(new FileInfo(inputFilePath)))
             {
                 foreach (var worksheet in package.Workbook.Worksheets)
@@ -144,11 +153,15 @@ namespace ACAM.Management.Presentation
                     int rowCount = worksheet.Dimension.Rows;
                     int colCount = worksheet.Dimension.Columns;
 
+                    // Definir os nomes de colunas válidos com base no mapeamento
+                    var validColumns = new[] { "Client", "pix_key", "pix key", "cpf_name", "amount", "trndate" };
+
                     using (var writer = new StreamWriter(outputFilePath))
                     {
                         for (int row = 1; row <= rowCount; row++)
                         {
                             var rowValues = new List<string>();
+                            bool isValidRow = true;
 
                             for (int col = 1; col <= colCount; col++)
                             {
@@ -160,7 +173,21 @@ namespace ACAM.Management.Presentation
                                     cellValue = "Amount";
                                 }
 
+                                // Verificar cabeçalhos na primeira linha
+                                if (row == 1 && !validColumns.Contains(cellValue, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    isValidRow = false; // Coluna inválida no cabeçalho
+                                    break;
+                                }
+
                                 rowValues.Add(cellValue);
+                            }
+
+                            // Se a linha não for válida, definir a flag e continuar
+                            if (!isValidRow && row > 1) // Ignora linhas com cabeçalhos inválidos após a primeira linha
+                            {
+                                linhasIgnoradas = true;
+                                continue;
                             }
 
                             writer.WriteLine(string.Join(",", rowValues)); // Escreve a linha no CSV
@@ -168,7 +195,18 @@ namespace ACAM.Management.Presentation
                     }
                 }
             }
+
+            // Mensagem com base na existência de linhas ignoradas
+            if (linhasIgnoradas)
+            {
+                MessageBox.Show("O arquivo foi processado, mas algumas linhas ou colunas foram ignoradas.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            else
+            {
+                MessageBox.Show("Arquivos convertidos com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
+
 
 
     }

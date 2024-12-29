@@ -31,6 +31,7 @@
             listFileAcams = new CheckedListBox();
             chkSelTodos = new CheckBox();
             btnProcessar = new Button();
+            progressBar = new ProgressBar();
             SuspendLayout();
             // 
             // listFileAcams
@@ -66,11 +67,20 @@
             btnProcessar.UseVisualStyleBackColor = true;
             btnProcessar.Click += btnProcessar_Click;
             // 
+            // progressBar
+            // 
+            progressBar.Location = new Point(582, 112);
+            progressBar.Name = "progressBar";
+            progressBar.Size = new Size(100, 23);
+            progressBar.TabIndex = 5;
+            progressBar.Visible = false;
+            // 
             // frmImportarEConverter
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(800, 148);
+            Controls.Add(progressBar);
             Controls.Add(btnProcessar);
             Controls.Add(chkSelTodos);
             Controls.Add(listFileAcams);
@@ -86,5 +96,6 @@
         private CheckedListBox listFileAcams;
         private CheckBox chkSelTodos;
         private Button btnProcessar;
+        private ProgressBar progressBar;
     }
 }
