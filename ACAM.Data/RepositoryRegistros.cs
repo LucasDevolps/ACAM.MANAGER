@@ -31,33 +31,48 @@ namespace ACAM.Data
         public void ProcessarCsvPorStreaming(string caminhoCsv, int idArquivo)
         {
             using (var reader = new StreamReader(caminhoCsv))
-            using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
             {
-                csv.Context.RegisterClassMap<AcamDtoMap>();
-
-                csv.Read(); // Ignorar cabeçalho
-                csv.ReadHeader();
-
-                var buffer = new List<AcamDTO>();
-                while (csv.Read())
+                var config = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
                 {
-                    var registro = csv.GetRecord<AcamDTO>();
-                    registro.Id_file = idArquivo;
-                    buffer.Add(registro);
+                    MissingFieldFound = null // Ignorar campos ausentes
+                };
 
-                    if (buffer.Count == 1000)
+                using (var csv = new CsvReader(reader, config))
+                {
+                    csv.Context.RegisterClassMap<AcamDtoMap>();
+
+                    csv.Read(); // Ignorar cabeçalho
+                    csv.ReadHeader();
+
+                    var buffer = new List<AcamDTO>();
+                    while (csv.Read())
                     {
-                        SalvarNoBanco(buffer);
-                        buffer.Clear();
-                    }
-                }
+                        try
+                        {
+                            var registro = csv.GetRecord<AcamDTO>();
+                            registro.Id_file = idArquivo; // Adicionar o ID do arquivo ao registro
+                            buffer.Add(registro);
 
-                if (buffer.Count > 0)
-                {
-                    SalvarNoBanco(buffer);
+                            if (buffer.Count == 1000)
+                            {
+                                SalvarNoBanco(buffer); // Salvar no banco em lotes
+                                buffer.Clear();
+                            }
+                        }
+                        catch (CsvHelperException ex)
+                        {
+                            Console.WriteLine($"Erro ao processar o registro: {ex.Message}");
+                        }
+                    }
+
+                    if (buffer.Count > 0)
+                    {
+                        SalvarNoBanco(buffer); // Salvar qualquer dado restante
+                    }
                 }
             }
         }
+
         public void SalvarNoBanco(List<AcamDTO> buffer)
         {
             try
@@ -116,23 +131,23 @@ namespace ACAM.Data
             string queryTruncar = "TRUNCATE TABLE Acam_Restritiva";
 
             string queryFiltrar = @"
-        SELECT 
-            SUM(Amount) AS TotalAmount,
-            Client,
-            Pix_Key,
-            cpf_name,
-            CURRENT_DATE AS TrnDate
-        FROM AcamData
-        WHERE TrnDate >= CURRENT_DATE - INTERVAL '365 days'
-        GROUP BY 
-            Client,
-            Pix_Key,
-            cpf_name
-        HAVING SUM(Amount) > @valorMaximo";
+                SELECT 
+                    SUM(Amount) AS TotalAmount,
+                    Client,
+                    Pix_Key,
+                    cpf_name,
+                    CURRENT_DATE AS TrnDate
+                FROM AcamData
+                WHERE TrnDate >= CURRENT_DATE - INTERVAL '365 days'
+                GROUP BY 
+                    Client,
+                    Pix_Key,
+                    cpf_name
+                HAVING SUM(Amount) > @valorMaximo";
 
             string queryInserir = @"
-        INSERT INTO Acam_Restritiva (Client, Pix_Key, cpf_name, Amount, TrnDate, Id_arquivo)
-        VALUES (@Client, @Pix_Key, @cpf_name, @Amount, @TrnDate, @Id_arquivo)";
+                        INSERT INTO Acam_Restritiva (Client, Pix_Key, cpf_name, Amount, TrnDate, Id_arquivo)
+                        VALUES (@Client, @Pix_Key, @cpf_name, @Amount, @TrnDate, @Id_arquivo)";
 
             var registrosFiltrados = new List<AcamDTO>();
 
@@ -287,7 +302,9 @@ namespace ACAM.Data
         {
 
 
-            string queryFiltrar = @"
+            try
+            {
+                string queryFiltrar = @"
                 SELECT 
                     ar.Amount,
                     ar.Client,
@@ -306,48 +323,55 @@ namespace ACAM.Data
 	                 end = 1 
                 ";
 
-            if (dataInicial != "" && dataFinal != "")
-            {
-                queryFiltrar = queryFiltrar + " and ar.TrnDate between '" + dataInicial + "' and '" + dataFinal + "' ";
-            }
-            if (documento != "")
-            {
-                queryFiltrar = queryFiltrar + " and replace(replace(replace(replace(ar.Pix_key,'.',''),',',''),'-',''),'/','') = '" + documento + "' ";
-            }
-
-            var registrosFiltrados = new List<AcamDTO>();
-
-            using (var connection = new NpgsqlConnection(_connectionString))
-            {
-                connection.Open();
-
-                using (var command = new NpgsqlCommand(queryFiltrar, connection))
+                if (dataInicial != "" && dataFinal != "")
                 {
-                    //command.Parameters.AddWithValue("@dataIni", dataInicial);
-                    //command.Parameters.AddWithValue("@dataFim", dataFinal);
-                    //command.Parameters.AddWithValue("@doc", documento);
+                    queryFiltrar = queryFiltrar + " and ar.TrnDate between '" + dataInicial + "' and '" + dataFinal + "' ";
+                }
+                if (documento != "")
+                {
+                    queryFiltrar = queryFiltrar + " and replace(replace(replace(replace(ar.Pix_key,'.',''),',',''),'-',''),'/','') = '" + documento + "' ";
+                }
 
-                    using (var reader = command.ExecuteReader())
+                var registrosFiltrados = new List<AcamDTO>();
+
+                using (var connection = new NpgsqlConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    using (var command = new NpgsqlCommand(queryFiltrar, connection))
                     {
-                        while (reader.Read())
-                        {
-                            var registro = new AcamDTO
-                            {
-                                Client = reader["Client"].ToString(),
-                                Pix_Key = reader["Pix_Key"].ToString(),
-                                cpf_name = reader["cpf_name"].ToString(),
-                                Amount = string.Format(CultureInfo.GetCultureInfo("pt-BR"), "R$ {0:#,###.##}", reader["Amount"]),
-                                TrnDate = reader["TrnDate"] as DateTime?,
-                                restrito = int.Parse(reader["Restrito"].ToString())
-                            };
+                        //command.Parameters.AddWithValue("@dataIni", dataInicial);
+                        //command.Parameters.AddWithValue("@dataFim", dataFinal);
+                        //command.Parameters.AddWithValue("@doc", documento);
 
-                            registrosFiltrados.Add(registro);
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var registro = new AcamDTO
+                                {
+                                    Client = reader["Client"].ToString(),
+                                    Pix_Key = reader["Pix_Key"].ToString(),
+                                    cpf_name = reader["cpf_name"].ToString(),
+                                    Amount = string.Format(CultureInfo.GetCultureInfo("pt-BR"), "R$ {0:#,###.##}", reader["Amount"]),
+                                    TrnDate = reader["TrnDate"] as DateTime?,
+                                    restrito = int.Parse(reader["Restrito"].ToString())
+                                };
+
+                                registrosFiltrados.Add(registro);
+                            }
                         }
                     }
                 }
-            }
 
-            return registrosFiltrados;
+                return registrosFiltrados;
+            }
+            catch (Exception ex)
+            {
+                var logger = new LoggerRepository();
+                logger.Log(ex);
+                return new List<AcamDTO>();
+            }
 
         }
 

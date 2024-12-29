@@ -59,30 +59,7 @@ internal class Program
                 }
                 #endregion
 
-                #region Passo 3 - Ao final do processo mover para PROCESSADOS
-                string pastaProcessados = Path.Combine(caminhoImportacao, "PROCESSADOS");
-
-                if (!Directory.Exists(pastaProcessados))
-                {
-                    Directory.CreateDirectory(pastaProcessados);
-                }
-
-                foreach (var arquivo in arquivosProcessados)
-                {
-                    string nomeArquivo = Path.GetFileName(arquivo);
-                    string destino = Path.Combine(pastaProcessados, nomeArquivo);
-
-                    try
-                    {
-                        File.Move(arquivo, destino, true);
-                        Console.WriteLine($"Arquivo movido para: {destino}");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Erro ao mover o arquivo {nomeArquivo}: {ex.Message}");
-                    }
-                }
-                #endregion
+                
             }
             catch (Exception ex)
             {

@@ -89,26 +89,66 @@ namespace ACAM.Management.Presentation
 
                 for (int i = 0; i < listFileAcams.Items.Count; i++)
                 {
-                    if (listFileAcams.GetItemChecked(i) == true)
+                    if (listFileAcams.GetItemChecked(i))
                     {
                         var filePath = (AcamFilesDto)listFileAcams.Items[i];
 
-                        int idFile = await _serviceArquivo.InicioDoProcessoArquivo(filePath.FilePath);
-                        // Processar os arquivos de forma assíncrona
-                        await Task.Run(() =>
+                        try
                         {
-                            _servicesRegistros.ProcessarCsvPorStreaming(filePath.FilePath, idFile);
-                            _servicesRegistros.SalvarNaTabelaRestritiva(45000, idFile);
-                            _servicesRegistros.GerarRelatorioSaidaProcessamento(idFile);
-                        });
+                            // Iniciar o processamento do arquivo e obter o ID
+                            int idArquivo = await _serviceArquivo.InicioDoProcessoArquivo(filePath.FilePath);
 
-                        // Atualizar os DataGrids após o processamento
-                        dataGridView1.DataSource = await Task.Run(() => _servicesRegistros.GerarRelatorioVisualTotal(idFile));
-                        dataGridView2.DataSource = await Task.Run(() => _servicesRegistros.GerarRelatorioVisualNaoProcessados(idFile));
+                            // Processar os arquivos de forma assíncrona
+                            await Task.Run(() =>
+                            {
+                                _servicesRegistros.ProcessarCsvPorStreaming(filePath.FilePath, idArquivo);
+                                _servicesRegistros.SalvarNaTabelaRestritiva(45000, idArquivo);
+                                _servicesRegistros.GerarRelatorioSaidaProcessamento(idArquivo);
+                            });
 
-                        MessageBox.Show("Sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            // Atualizar os DataGrids após o processamento
+                            var relatorioTotal = await Task.Run(() => _servicesRegistros.GerarRelatorioVisualTotal(idArquivo));
+                            var relatorioNaoProcessados = await Task.Run(() => _servicesRegistros.GerarRelatorioVisualNaoProcessados(idArquivo));
+
+                            dataGridView1.DataSource = relatorioTotal;
+                            dataGridView2.DataSource = relatorioNaoProcessados;
+
+                            // Mover arquivos processados para a pasta "PROCESSADOS"
+                            string pastaProcessados = Path.Combine(Path.GetDirectoryName(filePath.FilePath) ?? string.Empty, "PROCESSADOS");
+
+                            if (!Directory.Exists(pastaProcessados))
+                            {
+                                Directory.CreateDirectory(pastaProcessados);
+                            }
+
+                            string nomeArquivo = Path.GetFileName(filePath.FilePath);
+                            string destino = Path.Combine(pastaProcessados, nomeArquivo);
+
+                            try
+                            {
+                                File.Move(filePath.FilePath, destino, true);
+                                Console.WriteLine($"Arquivo movido para: {destino}");
+
+                                listFileAcams.Items.RemoveAt(i);
+                                i--; 
+                            }
+                            catch (IOException ex)
+                            {
+                                Console.WriteLine($"Erro ao mover o arquivo {nomeArquivo}: {ex.Message}");
+                            }
+
+                            
+                        }
+                        catch (Exception ex)
+                        {
+                            var logger = new LoggerRepository();
+                            logger.Log(ex);
+
+                            MessageBox.Show($"Erro ao processar o arquivo {filePath.FilePath}: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
+                MessageBox.Show("Arquivo processado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -123,6 +163,8 @@ namespace ACAM.Management.Presentation
                 progressBar1.Visible = false;
                 btnProcessar.Enabled = true;
             }
+
+
         }
 
 
