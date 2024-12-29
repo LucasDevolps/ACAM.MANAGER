@@ -40,6 +40,9 @@
             toolStripSeparator2 = new ToolStripSeparator();
             sairToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1 = new StatusStrip();
+            mnuImportarPPE = new ToolStripMenuItem();
+            toolStripSeparator3 = new ToolStripSeparator();
+            Configuracoes = new ToolStripMenuItem();
             mnuSystem.SuspendLayout();
             SuspendLayout();
             // 
@@ -54,7 +57,7 @@
             // 
             // arquivoToolStripMenuItem
             // 
-            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, toolStripSeparator, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator2, sairToolStripMenuItem });
+            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, mnuImportarPPE, toolStripSeparator, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator3, Configuracoes, toolStripSeparator2, sairToolStripMenuItem });
             arquivoToolStripMenuItem.Name = "arquivoToolStripMenuItem";
             arquivoToolStripMenuItem.Size = new Size(60, 20);
             arquivoToolStripMenuItem.Text = "&Sistema";
@@ -125,6 +128,27 @@
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
             // 
+            // mnuImportarPPE
+            // 
+            mnuImportarPPE.Image = (Image)resources.GetObject("mnuImportarPPE.Image");
+            mnuImportarPPE.ImageTransparentColor = Color.Magenta;
+            mnuImportarPPE.Name = "mnuImportarPPE";
+            mnuImportarPPE.Size = new Size(243, 22);
+            mnuImportarPPE.Text = "&Importar PPE";
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(240, 6);
+            // 
+            // Configuracoes
+            // 
+            Configuracoes.Image = Properties.Resources.Operacional;
+            Configuracoes.Name = "Configuracoes";
+            Configuracoes.Size = new Size(243, 22);
+            Configuracoes.Text = "Configurações";
+            Configuracoes.Click += Configuracoes_Click;
+            // 
             // FrmSys
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -158,5 +182,8 @@
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem sairToolStripMenuItem;
         private StatusStrip statusStrip1;
+        private ToolStripMenuItem mnuImportarPPE;
+        private ToolStripSeparator toolStripSeparator3;
+        private ToolStripMenuItem Configuracoes;
     }
 }

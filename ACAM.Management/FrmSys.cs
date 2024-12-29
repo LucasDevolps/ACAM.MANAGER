@@ -29,7 +29,13 @@ namespace ACAM.Management
 
         private void mnuGerarAcamProcessada_Click(object sender, EventArgs e)
         {
-            FrmGerarACAMSaida objForm  = new FrmGerarACAMSaida();
+            FrmGerarACAMSaida objForm = new FrmGerarACAMSaida();
+            objForm.ShowDialog(this);
+        }
+
+        private void Configuracoes_Click(object sender, EventArgs e)
+        {
+            FrmConfiguracao objForm = new FrmConfiguracao();
             objForm.ShowDialog(this);
         }
     }
