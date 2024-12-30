@@ -1,8 +1,11 @@
 ﻿using ACAM.Data;
 using ACAM.Domain.DTOs;
+using ACAM.Domain.Interface.Service;
+using ACAM.Service;
 using Microsoft.Extensions.Configuration;
 using OfficeOpenXml;
 using System.Data;
+using System.Windows.Forms;
 
 namespace ACAM.Management.Presentation
 {
@@ -12,6 +15,9 @@ namespace ACAM.Management.Presentation
         public static IConfiguration _configuration;
         public string _caminhoImportacao;
 
+
+        public static IServiceArquivo _serviceArquivo = new ServiceArquivo();
+        public static IServicesRegistros _servicesRegistros = new ServicesRegistros();
         public frmImportarEConverter()
         {
             _builder.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
@@ -97,9 +103,10 @@ namespace ACAM.Management.Presentation
             }
         }
 
-        private void btnProcessar_Click(object sender, EventArgs e)
+        private async void btnProcessar_Click(object sender, EventArgs e)
         {
-            progressBar.Visible = true;
+            progressBar.Visible = true; // Exibir o ProgressBar
+            progressBar.Style = ProgressBarStyle.Marquee; // Indicador de progresso indeterminado
             btnProcessar.Enabled = false;
             try
             {
@@ -118,11 +125,24 @@ namespace ACAM.Management.Presentation
                     if (inputFilePath.EndsWith(".xls", StringComparison.OrdinalIgnoreCase) ||
                         inputFilePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
                     {
-                        ConvertExcelToCsv(inputFilePath, _caminhoImportacao);
+                        string convertedFilePath = ConvertExcelToCsv(inputFilePath, _caminhoImportacao);
+
+                        try
+                        {
+                            await Task.Run(() =>
+                            {
+                                ImportarCsvsConvertidos();
+                            });                           
+                        }
+                        catch (Exception ex)
+                        {
+                            var logger = new LoggerRepository();
+                            logger.Log(ex);
+
+                            MessageBox.Show($"Erro ao processar o arquivo {convertedFilePath}: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
-
-                //MessageBox.Show("Arquivos convertidos com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -139,16 +159,18 @@ namespace ACAM.Management.Presentation
         }
 
 
-        private void ConvertExcelToCsv(string inputFilePath, string outputDirectory)
+        private string ConvertExcelToCsv(string inputFilePath, string outputDirectory)
         {
             bool linhasIgnoradas = false; // Flag para rastrear se houve linhas ignoradas
+            string outputFilePath = string.Empty;
+
 
             using (var package = new OfficeOpenXml.ExcelPackage(new FileInfo(inputFilePath)))
             {
                 foreach (var worksheet in package.Workbook.Worksheets)
                 {
                     string sanitizedSheetName = string.Join("_", worksheet.Name.Split(Path.GetInvalidFileNameChars()));
-                    string outputFilePath = Path.Combine(outputDirectory, $"{Path.GetFileNameWithoutExtension(inputFilePath)}_{sanitizedSheetName}.csv");
+                    outputFilePath = Path.Combine(outputDirectory, $"{Path.GetFileNameWithoutExtension(inputFilePath)}_{sanitizedSheetName}.csv");
 
                     int rowCount = worksheet.Dimension.Rows;
                     int colCount = worksheet.Dimension.Columns;
@@ -195,20 +217,11 @@ namespace ACAM.Management.Presentation
                     }
                 }
             }
+            // Conversão do Excel para CSV
+            string fileName = Path.GetFileNameWithoutExtension(inputFilePath) + ".csv";
 
-            // Mensagem com base na existência de linhas ignoradas
-            if (linhasIgnoradas)
-            {
-                MessageBox.Show("O arquivo foi processado, mas algumas linhas ou colunas foram ignoradas.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            else
-            {
-                MessageBox.Show("Arquivos convertidos com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            return outputFilePath;
         }
-
-
-
     }
 }
  
