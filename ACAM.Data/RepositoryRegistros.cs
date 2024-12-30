@@ -72,6 +72,14 @@ namespace ACAM.Data
                     }
                 }
             }
+            string processedDirectory = Path.Combine(Path.GetDirectoryName(caminhoCsv), "processados");
+            if (!Directory.Exists(processedDirectory))
+            {
+                Directory.CreateDirectory(processedDirectory);
+            }
+             
+            string processedFilePath = Path.Combine(processedDirectory, Path.GetFileName(caminhoCsv));
+            File.Move(caminhoCsv, processedFilePath, true);
         }
         public void NovoProcessarCsvPorStreaming(string caminhoCsv, int idArquivo)
         {

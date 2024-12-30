@@ -135,9 +135,17 @@ namespace ACAM.Management.Presentation
 
                             await Task.Run(() =>
                             {
-                                _servicesRegistros.ProcessarCsvPorStreaming(convertedFilePath, idArquivo);
+                                string directoryPath = Path.GetDirectoryName(convertedFilePath);
+
+                                var csvFiles = Directory.GetFiles(directoryPath, "*.csv", SearchOption.TopDirectoryOnly);
+
+                                foreach (var filePath in csvFiles)
+                                {
+                                    _servicesRegistros.ProcessarCsvPorStreaming(filePath, idArquivo);
+                                }
                             });
-                                                      
+
+
                         }
                         catch (Exception ex)
                         {
