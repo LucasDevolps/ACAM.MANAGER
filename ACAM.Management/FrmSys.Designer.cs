@@ -33,8 +33,8 @@
             arquivoToolStripMenuItem = new ToolStripMenuItem();
             mnuImportarACAM = new ToolStripMenuItem();
             lblImportarEConverter = new ToolStripMenuItem();
-            mnuImportarPPE = new ToolStripMenuItem();
-            toolStripSeparator = new ToolStripSeparator();
+            toolStripMenuItem1 = new ToolStripMenuItem();
+            btnImportaRetrita = new ToolStripMenuItem();
             mnuConsultaBaseCentral = new ToolStripMenuItem();
             mnuConsultaBaseRestrira = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
@@ -44,8 +44,8 @@
             toolStripSeparator2 = new ToolStripSeparator();
             sairToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1 = new StatusStrip();
-            toolStripMenuItem1 = new ToolStripMenuItem();
-            btnImportaRetrita = new ToolStripMenuItem();
+            toolStripSeparator4 = new ToolStripSeparator();
+            btnImportCAF = new ToolStripMenuItem();
             mnuSystem.SuspendLayout();
             SuspendLayout();
             // 
@@ -60,7 +60,7 @@
             // 
             // arquivoToolStripMenuItem
             // 
-            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, lblImportarEConverter, toolStripMenuItem1, btnImportaRetrita, mnuImportarPPE, toolStripSeparator, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator3, Configuracoes, toolStripSeparator2, sairToolStripMenuItem });
+            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, lblImportarEConverter, toolStripMenuItem1, btnImportaRetrita, btnImportCAF, toolStripSeparator4, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator3, Configuracoes, toolStripSeparator2, sairToolStripMenuItem });
             arquivoToolStripMenuItem.Name = "arquivoToolStripMenuItem";
             arquivoToolStripMenuItem.Size = new Size(60, 20);
             arquivoToolStripMenuItem.Text = "&Sistema";
@@ -80,23 +80,26 @@
             lblImportarEConverter.Image = (Image)resources.GetObject("lblImportarEConverter.Image");
             lblImportarEConverter.ImageTransparentColor = Color.Magenta;
             lblImportarEConverter.Name = "lblImportarEConverter";
-            lblImportarEConverter.ShortcutKeys = Keys.Control | Keys.S;
             lblImportarEConverter.Size = new Size(243, 22);
             lblImportarEConverter.Text = "Converter XLS";
             lblImportarEConverter.Click += lblImportarEConverter_Click;
             // 
-            // mnuImportarPPE
+            // toolStripMenuItem1
             // 
-            mnuImportarPPE.Image = (Image)resources.GetObject("mnuImportarPPE.Image");
-            mnuImportarPPE.ImageTransparentColor = Color.Magenta;
-            mnuImportarPPE.Name = "mnuImportarPPE";
-            mnuImportarPPE.Size = new Size(243, 22);
-            mnuImportarPPE.Text = "&Importar PPE";
+            toolStripMenuItem1.Image = (Image)resources.GetObject("toolStripMenuItem1.Image");
+            toolStripMenuItem1.ImageTransparentColor = Color.Magenta;
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(243, 22);
+            toolStripMenuItem1.Text = "&Importar PPE";
             // 
-            // toolStripSeparator
+            // btnImportaRetrita
             // 
-            toolStripSeparator.Name = "toolStripSeparator";
-            toolStripSeparator.Size = new Size(240, 6);
+            btnImportaRetrita.Image = (Image)resources.GetObject("btnImportaRetrita.Image");
+            btnImportaRetrita.ImageTransparentColor = Color.Magenta;
+            btnImportaRetrita.Name = "btnImportaRetrita";
+            btnImportaRetrita.Size = new Size(243, 22);
+            btnImportaRetrita.Text = "&Importar Base Restrita";
+            btnImportaRetrita.Click += btnImportaRetrita_Click;
             // 
             // mnuConsultaBaseCentral
             // 
@@ -162,22 +165,19 @@
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
             // 
-            // toolStripMenuItem1
+            // toolStripSeparator4
             // 
-            toolStripMenuItem1.Image = (Image)resources.GetObject("toolStripMenuItem1.Image");
-            toolStripMenuItem1.ImageTransparentColor = Color.Magenta;
-            toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new Size(243, 22);
-            toolStripMenuItem1.Text = "&Importar PPE";
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new Size(240, 6);
             // 
-            // btnImportaRetrita
+            // btnImportCAF
             // 
-            btnImportaRetrita.Image = (Image)resources.GetObject("btnImportaRetrita.Image");
-            btnImportaRetrita.ImageTransparentColor = Color.Magenta;
-            btnImportaRetrita.Name = "btnImportaRetrita";
-            btnImportaRetrita.Size = new Size(243, 22);
-            btnImportaRetrita.Text = "&Importar Base Restrita";
-            btnImportaRetrita.Click += btnImportaRetrita_Click;
+            btnImportCAF.Image = (Image)resources.GetObject("btnImportCAF.Image");
+            btnImportCAF.ImageTransparentColor = Color.Magenta;
+            btnImportCAF.Name = "btnImportCAF";
+            btnImportCAF.Size = new Size(243, 22);
+            btnImportCAF.Text = "&Importar CAF";
+            btnImportCAF.Click += btnImportCAF_Click;
             // 
             // FrmSys
             // 
@@ -204,7 +204,6 @@
         private MenuStrip mnuSystem;
         private ToolStripMenuItem arquivoToolStripMenuItem;
         private ToolStripMenuItem mnuImportarACAM;
-        private ToolStripSeparator toolStripSeparator;
         private ToolStripMenuItem mnuConsultaBaseCentral;
         private ToolStripMenuItem mnuConsultaBaseRestrira;
         private ToolStripSeparator toolStripSeparator1;
@@ -212,11 +211,12 @@
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem sairToolStripMenuItem;
         private StatusStrip statusStrip1;
-        private ToolStripMenuItem mnuImportarPPE;
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripMenuItem Configuracoes;
         private ToolStripMenuItem lblImportarEConverter;
         private ToolStripMenuItem toolStripMenuItem1;
         private ToolStripMenuItem btnImportaRetrita;
+        private ToolStripSeparator toolStripSeparator4;
+        private ToolStripMenuItem btnImportCAF;
     }
 }

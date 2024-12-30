@@ -68,7 +68,6 @@ namespace ACAM.Management.Presentation
                     listFileAcams.Items.Add(item);
                 }
 
-
             }
             catch (Exception ex)
             {
@@ -86,8 +85,6 @@ namespace ACAM.Management.Presentation
                 progressBar1.Visible = true; // Exibir o ProgressBar
                 progressBar1.Style = ProgressBarStyle.Marquee; // Indicador de progresso indeterminado
                 btnProcessar.Enabled = false; // Desabilitar o botão durante o processamento
-
-                string connectionString = _configuration["ConnectionStrings:DefaultConnection"];
 
                 for (int i = 0; i < listFileAcams.Items.Count; i++)
                 {

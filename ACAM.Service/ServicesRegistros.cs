@@ -74,5 +74,15 @@ namespace ACAM.Service
         {
             _repository.ForcaImportacaoRestritiva(idArquivo);
         }
+        
+        public Task ImportarCAF(List<AcamRestritivaCAFDTO> buffer)
+        {
+            return _repository.ImportarCAF(buffer);
+        }
+
+        public void ProcessaCAFCSV(int idArquivo, string caminho)
+        {
+            _repository.ProcessaCAFCSV(idArquivo, caminho);
+        }
     }
 }

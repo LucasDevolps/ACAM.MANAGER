@@ -27,5 +27,9 @@ namespace ACAM.Domain.Interface.Repository
         void GerarRelatorio(int idArquivo, string caminhoArquivo);
 
         void ForcaImportacaoRestritiva(int idArquivo);
+
+        Task ImportarCAF(List<AcamRestritivaCAFDTO> buffer);
+
+        void ProcessaCAFCSV(int idArquivo, string caminho);
     }
 }

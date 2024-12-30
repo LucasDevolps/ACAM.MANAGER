@@ -50,5 +50,11 @@ namespace ACAM.Management
             frmImportarBaseRestrita objForm = new frmImportarBaseRestrita();
             objForm.ShowDialog(this);
         }
+
+        private void btnImportCAF_Click(object sender, EventArgs e)
+        {
+            frmImportarCAF objForm = new frmImportarCAF();
+            objForm.ShowDialog(this);
+        }
     }
 }

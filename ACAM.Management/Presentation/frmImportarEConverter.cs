@@ -24,7 +24,7 @@ namespace ACAM.Management.Presentation
 
             _configuration = _builder.Build();
 
-            _caminhoImportacao = Path.Combine(_configuration["Configuracoes:CaminhoLocal"], "Convertidos");
+            _caminhoImportacao = Path.Combine(_configuration["Configuracoes:CaminhoLocal"], "V2","Convertidos");
 
             InitializeComponent();
         }
@@ -33,7 +33,7 @@ namespace ACAM.Management.Presentation
         {
             try
             {
-                string caminhoImportacao = _configuration["Configuracoes:CaminhoLocal"];
+                string caminhoImportacao = Path.Combine(_configuration["Configuracoes:CaminhoLocal"],"V2");
 
                 listFileAcams.DisplayMember = "FileName";
                 listFileAcams.ValueMember = "FilePath";
@@ -41,8 +41,9 @@ namespace ACAM.Management.Presentation
                 if (Directory.Exists(caminhoImportacao))
                 {
                     // Busca arquivos com extensões .csv, .xls e .xlsx
-                    string[] arquivos = Directory.GetFiles(caminhoImportacao, "*.*")
-                                                 .Where(file => file.EndsWith(".xls", StringComparison.OrdinalIgnoreCase) ||
+                    string[] arquivos = Directory.GetFiles(caminhoImportacao, "*.*", SearchOption.AllDirectories)
+                                                 .Where(file => file.EndsWith(".csv", StringComparison.OrdinalIgnoreCase) ||
+                                                                file.EndsWith(".xls", StringComparison.OrdinalIgnoreCase) ||
                                                                 file.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
                                                  .ToArray();
 
@@ -108,6 +109,7 @@ namespace ACAM.Management.Presentation
             progressBar.Visible = true; // Exibir o ProgressBar
             progressBar.Style = ProgressBarStyle.Marquee; // Indicador de progresso indeterminado
             btnProcessar.Enabled = false;
+            int idArquivo = 0; 
             try
             {
                 // Configura o contexto de licença da EPPlus
@@ -129,10 +131,9 @@ namespace ACAM.Management.Presentation
 
                         try
                         {
-                            await Task.Run(() =>
-                            {
-                                //ImportarCsvsConvertidos();
-                            });                           
+                            idArquivo = await _serviceArquivo.InicioDoProcessoArquivo(inputFilePath);
+
+                                                      
                         }
                         catch (Exception ex)
                         {

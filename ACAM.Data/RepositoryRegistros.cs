@@ -1034,6 +1034,112 @@ namespace ACAM.Data
                 }
             }
         }
+        public async Task ImportarCAF(List<AcamRestritivaCAFDTO> buffer)
+        {
+            try
+            {
+                using (var connection = new NpgsqlConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        var table = new DataTable();
+                        table.Columns.Add("ID", typeof(string));
+                        table.Columns.Add("CriadoEm", typeof(DateTime));
+                        table.Columns.Add("AtualizadoEm", typeof(DateTime));
+                        table.Columns.Add("CriadoPor", typeof(string));
+                        table.Columns.Add("Nome", typeof(string));
+                        table.Columns.Add("CPFCNPJ", typeof(string));
+                        table.Columns.Add("Status", typeof(string));
+                        table.Columns.Add("Mensagem", typeof(string));
+                        table.Columns.Add("MotivoReprovacao", typeof(string));
+                        table.Columns.Add("URLTrust", typeof(string));
+                        table.Columns.Add("IdArquivo", typeof(int));
+
+                        foreach (var registro in buffer)
+                        {
+                            table.Rows.Add(
+                                registro.ID,
+                                registro.CriadoEm ?? (object)DBNull.Value,
+                                registro.AtualizadoEm ?? (object)DBNull.Value,
+                                registro.CriadoPor,
+                                registro.Nome,
+                                registro.CPFCNPJ,
+                                registro.Status,
+                                registro.Mensagem,
+                                registro.MotivoReprovacao,
+                                registro.URLTrust,
+                                registro.IdArquivo
+                            );
+                        }
+
+                        using (var writer = connection.BeginBinaryImport("COPY CAF (ID, CriadoEm, AtualizadoEm, CriadoPor, Nome, CPFCNPJ, Status, Mensagem, MotivoReprovacao, URLTrust, Id_arquivo) FROM STDIN (FORMAT BINARY)"))
+                        {
+                            foreach (DataRow row in table.Rows)
+                            {
+                                writer.StartRow();
+                                for (int i = 0; i < table.Columns.Count; i++)
+                                {
+                                    writer.Write(row[i]);
+                                }
+                            }
+                            writer.Complete();
+                        }
+
+                        transaction.Commit();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var logger = new LoggerRepository();
+                logger.Log(ex);
+            }
+        }
+
+        public void ProcessaCAFCSV(int idArquivo, string caminho)
+        {
+            using (var reader = new StreamReader(caminho))
+            {
+                var config = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    MissingFieldFound = null // Ignorar campos ausentes
+                };
+
+                using (var csv = new CsvReader(reader, config))
+                {
+                    csv.Read(); // Ignorar cabeçalho
+                    csv.ReadHeader();
+
+                    var buffer = new List<AcamRestritivaCAFDTO>();
+                    while (csv.Read())
+                    {
+                        try
+                        {
+                            var registro = csv.GetRecord<AcamRestritivaCAFDTO>();
+                            registro.IdArquivo = idArquivo; 
+                            buffer.Add(registro);
+
+                            if (buffer.Count == 1000)
+                            {
+                                ImportarCAF(buffer); // Salvar no banco em lotes
+                                buffer.Clear();
+                            }
+                        }
+                        catch (CsvHelperException ex)
+                        {
+                            Console.WriteLine($"Erro ao processar o registro: {ex.Message}");
+                        }
+                    }
+
+                    if (buffer.Count > 0)
+                    {
+                        ImportarCAF(buffer); // Salvar qualquer dado restante
+                    }
+                }
+            }
+        }
     }
 
 }
