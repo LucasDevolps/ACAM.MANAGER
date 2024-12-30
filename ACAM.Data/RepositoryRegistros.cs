@@ -375,6 +375,80 @@ namespace ACAM.Data
 
         }
 
+        public void GerarRelatorio(int idArquivo, string caminhoArquivo)
+        {
+            try
+            {
+                _NOME_RELATORIO = NomeDoRelatorio();
+
+                string queryFiltrar = @"
+                SELECT 
+                    a.Amount,
+                    a.Client,
+                    a.Pix_key,
+                    a.cpf_name,
+	                a.TrnDate,
+	                case 
+	                  when ar.Pix_key is null then 0 
+	                  else 1 
+	                 end as Restrito
+                FROM AcamData a left join Acam_Restritiva ar on ar.Client = a.Client and ar.Pix_key = a.Pix_key
+                WHERE 
+                  a.Id_arquivo = @idFile";
+
+                var arquivosProcessados = new List<string>();
+
+                using (var connection = new NpgsqlConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    var registrosFiltrados = new List<AcamDTO>();
+                    var registrosNaoInseridos = new List<AcamDTO>();
+
+                    using (var command = new NpgsqlCommand(queryFiltrar, connection))
+                    {
+                        command.Parameters.AddWithValue("@idFile", idArquivo);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var registro = new AcamDTO
+                                {
+                                    Client = reader["Client"].ToString(),
+                                    Pix_Key = reader["Pix_Key"].ToString(),
+                                    cpf_name = reader["cpf_name"].ToString(),
+                                    Amount = reader["Amount"].ToString(),
+                                    TrnDate = reader["TrnDate"] as DateTime?,
+                                    restrito = int.Parse(reader["Restrito"].ToString())
+                                };
+
+                                registrosFiltrados.Add(registro);
+                            }
+                        }
+                    }
+
+                    if (registrosFiltrados.Count > 0)
+                    {
+                        var registroForaLimite = registrosFiltrados.Where(x => x.restrito == 1).ToList();
+                        var registroDentroLimite = registrosFiltrados.Where(x => x.restrito == 0).ToList();
+
+                        // Aqui precisa gerar a planiha com as duas abas 
+                        if (registroForaLimite.Count > 0 || registroDentroLimite.Count > 0)
+                        {
+                            //GERAR ACAM DE SAIDA
+                            GerarRelatorioFinal(registroForaLimite, registroDentroLimite,caminhoArquivo);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var logger = new LoggerRepository();
+                logger.Log(ex);
+            }
+        }
+
         //Validar se ainda usa
         public IEnumerable<AcamDTO> FiltrarRegistrosPorValor(decimal valorMinimo, int idFile)
         {
@@ -575,6 +649,36 @@ namespace ACAM.Data
             {
                 string caminhoImportacao = _caminhoImportacaoLocal;
                 string pastaRelatorios = Path.Combine(caminhoImportacao, "processados", "relatorios");
+
+                if (!Directory.Exists(pastaRelatorios))
+                {
+                    Directory.CreateDirectory(pastaRelatorios);
+                }
+
+                string caminhoRelatorio = Path.Combine(pastaRelatorios, NomeDoRelatorio());
+
+                using var workbook = new XLWorkbook();
+
+                var worksheetBanco = workbook.Worksheets.Add("Registros dentro do limite");
+                PreencherGuiaExcel(worksheetBanco, registroDentroLimite);
+
+                var worksheetNaoInseridos = workbook.Worksheets.Add("Registros fora do limite");
+                PreencherGuiaExcel(worksheetNaoInseridos, registroForaLimite);
+
+                workbook.SaveAs(caminhoRelatorio);
+                Console.WriteLine($"Relatório salvo em: {pastaRelatorios}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+        private void GerarRelatorioFinal(IEnumerable<AcamDTO> registroForaLimite, IEnumerable<AcamDTO> registroDentroLimite,string caminho)
+        {
+            try
+            {
+                string caminhoImportacao = _caminhoImportacaoLocal;
+                string pastaRelatorios = Path.Combine(caminhoImportacao, caminho, "processados", "relatorios");
 
                 if (!Directory.Exists(pastaRelatorios))
                 {
@@ -877,6 +981,58 @@ namespace ACAM.Data
             }
 
             
+        }
+        public void ForcaImportacaoRestritiva(int idArquivo) 
+        {  
+            string queryInserir = @"
+                        INSERT INTO Acam_Restritiva (Client, Pix_Key, cpf_name, Amount, TrnDate, Id_arquivo)
+                        VALUES (@Client, @Pix_Key, @cpf_name, @Amount, @TrnDate, @Id_arquivo)";
+
+            var registrosFiltrados = new List<AcamDTO>();
+
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // Inserir os registros na tabela restritiva
+                        foreach (var registro in registrosFiltrados)
+                        {
+                            using (var insertCommand = new NpgsqlCommand(queryInserir, connection, transaction))
+                            {
+                                insertCommand.Parameters.AddWithValue("@Client", registro.Client);
+                                insertCommand.Parameters.AddWithValue("@Pix_Key", registro.Pix_Key);
+                                insertCommand.Parameters.AddWithValue("@cpf_name", registro.cpf_name);
+
+                                // Converter Amount para decimal ou passar DBNull se inválido
+                                if (decimal.TryParse(registro.Amount, NumberStyles.Any, new CultureInfo("pt-BR"), out var amount))
+                                {
+                                    insertCommand.Parameters.AddWithValue("@Amount", amount);
+                                }
+                                else
+                                {
+                                    insertCommand.Parameters.AddWithValue("@Amount", DBNull.Value);
+                                }
+
+                                insertCommand.Parameters.AddWithValue("@TrnDate", registro.TrnDate ?? (object)DBNull.Value);
+                                insertCommand.Parameters.AddWithValue("@Id_arquivo", idArquivo);
+
+                                insertCommand.ExecuteNonQuery();
+                            }
+                        }
+
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        Console.WriteLine($"Erro ao inserir na tabela Acam_Restritiva: {ex.Message}");
+                    }
+                }
+            }
         }
     }
 

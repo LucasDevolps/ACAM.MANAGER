@@ -28,12 +28,63 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Text = "frmImportarBaseRestrita";
+            listFileAcams = new CheckedListBox();
+            btnProcessar = new Button();
+            chkSelTodos = new CheckBox();
+            SuspendLayout();
+            // 
+            // listFileAcams
+            // 
+            listFileAcams.BackColor = SystemColors.InactiveCaption;
+            listFileAcams.FormattingEnabled = true;
+            listFileAcams.Location = new Point(12, 12);
+            listFileAcams.Name = "listFileAcams";
+            listFileAcams.Size = new Size(863, 94);
+            listFileAcams.TabIndex = 1;
+            // 
+            // btnProcessar
+            // 
+            btnProcessar.BackgroundImageLayout = ImageLayout.Stretch;
+            btnProcessar.Image = Properties.Resources.CHECKMRK;
+            btnProcessar.ImageAlign = ContentAlignment.MiddleLeft;
+            btnProcessar.Location = new Point(775, 112);
+            btnProcessar.Name = "btnProcessar";
+            btnProcessar.Size = new Size(100, 25);
+            btnProcessar.TabIndex = 5;
+            btnProcessar.Text = "Processar Importação";
+            btnProcessar.UseVisualStyleBackColor = true;
+            btnProcessar.Click += btnProcessar_Click;
+            // 
+            // chkSelTodos
+            // 
+            chkSelTodos.AutoSize = true;
+            chkSelTodos.Location = new Point(12, 116);
+            chkSelTodos.Name = "chkSelTodos";
+            chkSelTodos.Size = new Size(114, 19);
+            chkSelTodos.TabIndex = 6;
+            chkSelTodos.Text = "Selecionar Todos";
+            chkSelTodos.UseVisualStyleBackColor = true;
+            chkSelTodos.CheckedChanged += chkSelTodos_CheckedChanged;
+            // 
+            // frmImportarBaseRestrita
+            // 
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(890, 150);
+            Controls.Add(chkSelTodos);
+            Controls.Add(btnProcessar);
+            Controls.Add(listFileAcams);
+            Name = "frmImportarBaseRestrita";
+            Text = "frmImportarBaseRestrita";
+            Load += frmImportarBaseRestrita_Load;
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
+
+        private CheckedListBox listFileAcams;
+        private Button btnProcessar;
+        private CheckBox chkSelTodos;
     }
 }

@@ -44,6 +44,8 @@
             toolStripSeparator2 = new ToolStripSeparator();
             sairToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1 = new StatusStrip();
+            toolStripMenuItem1 = new ToolStripMenuItem();
+            btnImportaRetrita = new ToolStripMenuItem();
             mnuSystem.SuspendLayout();
             SuspendLayout();
             // 
@@ -58,7 +60,7 @@
             // 
             // arquivoToolStripMenuItem
             // 
-            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, lblImportarEConverter, mnuImportarPPE, toolStripSeparator, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator3, Configuracoes, toolStripSeparator2, sairToolStripMenuItem });
+            arquivoToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mnuImportarACAM, lblImportarEConverter, toolStripMenuItem1, btnImportaRetrita, mnuImportarPPE, toolStripSeparator, mnuConsultaBaseCentral, mnuConsultaBaseRestrira, toolStripSeparator1, mnuGerarAcamProcessada, toolStripSeparator3, Configuracoes, toolStripSeparator2, sairToolStripMenuItem });
             arquivoToolStripMenuItem.Name = "arquivoToolStripMenuItem";
             arquivoToolStripMenuItem.Size = new Size(60, 20);
             arquivoToolStripMenuItem.Text = "&Sistema";
@@ -160,6 +162,23 @@
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
             // 
+            // toolStripMenuItem1
+            // 
+            toolStripMenuItem1.Image = (Image)resources.GetObject("toolStripMenuItem1.Image");
+            toolStripMenuItem1.ImageTransparentColor = Color.Magenta;
+            toolStripMenuItem1.Name = "toolStripMenuItem1";
+            toolStripMenuItem1.Size = new Size(243, 22);
+            toolStripMenuItem1.Text = "&Importar PPE";
+            // 
+            // btnImportaRetrita
+            // 
+            btnImportaRetrita.Image = (Image)resources.GetObject("btnImportaRetrita.Image");
+            btnImportaRetrita.ImageTransparentColor = Color.Magenta;
+            btnImportaRetrita.Name = "btnImportaRetrita";
+            btnImportaRetrita.Size = new Size(243, 22);
+            btnImportaRetrita.Text = "&Importar Base Restrita";
+            btnImportaRetrita.Click += btnImportaRetrita_Click;
+            // 
             // FrmSys
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -197,5 +216,7 @@
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripMenuItem Configuracoes;
         private ToolStripMenuItem lblImportarEConverter;
+        private ToolStripMenuItem toolStripMenuItem1;
+        private ToolStripMenuItem btnImportaRetrita;
     }
 }

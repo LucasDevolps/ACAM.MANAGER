@@ -23,5 +23,9 @@ namespace ACAM.Domain.Interface.Repository
         IEnumerable<AcamDTO> ConsultaBaseGeral(string dataInicial, string dataFinal, int documento);
 
         IEnumerable<AcamDTO> ConsultaBaseRestritra(string dataInicial, string dataFinal, string documento);
+
+        void GerarRelatorio(int idArquivo, string caminhoArquivo);
+
+        void ForcaImportacaoRestritiva(int idArquivo);
     }
 }

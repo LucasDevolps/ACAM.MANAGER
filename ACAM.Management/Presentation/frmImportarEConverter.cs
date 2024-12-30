@@ -131,7 +131,7 @@ namespace ACAM.Management.Presentation
                         {
                             await Task.Run(() =>
                             {
-                                ImportarCsvsConvertidos();
+                                //ImportarCsvsConvertidos();
                             });                           
                         }
                         catch (Exception ex)

@@ -44,5 +44,11 @@ namespace ACAM.Management
             frmImportarEConverter objForm = new frmImportarEConverter();
             objForm.ShowDialog(this);
         }
+
+        private void btnImportaRetrita_Click(object sender, EventArgs e)
+        {
+            frmImportarBaseRestrita objForm = new frmImportarBaseRestrita();
+            objForm.ShowDialog(this);
+        }
     }
 }

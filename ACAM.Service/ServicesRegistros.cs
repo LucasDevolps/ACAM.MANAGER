@@ -65,5 +65,14 @@ namespace ACAM.Service
         {
             return _repository.ConsultaBaseGeral(dataInicial, dataFinal, documento);
         }
+
+        public void GerarRelatorio(int idArquivo, string caminhoArquivo)
+        {
+            _repository.GerarRelatorio(idArquivo, caminhoArquivo);
+        }
+        public void ForcaImportacaoRestritiva(int idArquivo)
+        {
+            _repository.ForcaImportacaoRestritiva(idArquivo);
+        }
     }
 }
