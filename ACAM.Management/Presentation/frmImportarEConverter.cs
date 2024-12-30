@@ -110,6 +110,7 @@ namespace ACAM.Management.Presentation
             progressBar.Style = ProgressBarStyle.Marquee; // Indicador de progresso indeterminado
             btnProcessar.Enabled = false;
             int idArquivo = 0; 
+            List<int> idsArquivos = new List<int>();
             try
             {
                 // Configura o contexto de licença da EPPlus
@@ -129,33 +130,29 @@ namespace ACAM.Management.Presentation
                     {
                         string convertedFilePath = ConvertExcelToCsv(inputFilePath, _caminhoImportacao);
 
-                        try
-                        {
-                            idArquivo = await _serviceArquivo.InicioDoProcessoArquivo(inputFilePath);
+                        idArquivo = await _serviceArquivo.InicioDoProcessoArquivo(inputFilePath);
 
-                            await Task.Run(() =>
+                        idsArquivos.Add(idArquivo);
+
+                        await Task.Run(() =>
+                        {
+                            string directoryPath = Path.GetDirectoryName(convertedFilePath);
+
+                            var csvFiles = Directory.GetFiles(directoryPath, "*.csv", SearchOption.TopDirectoryOnly);
+
+                            foreach (var filePath in csvFiles)
                             {
-                                string directoryPath = Path.GetDirectoryName(convertedFilePath);
+                                _servicesRegistros.ProcessarCsvPorStreaming(filePath, idArquivo);
+                            }
 
-                                var csvFiles = Directory.GetFiles(directoryPath, "*.csv", SearchOption.TopDirectoryOnly);
+                            _servicesRegistros.GerarCSVUnificado(idsArquivos);
 
-                                foreach (var filePath in csvFiles)
-                                {
-                                    _servicesRegistros.ProcessarCsvPorStreaming(filePath, idArquivo);
-                                }
-                            });
-
-
-                        }
-                        catch (Exception ex)
-                        {
-                            var logger = new LoggerRepository();
-                            logger.Log(ex);
-
-                            MessageBox.Show($"Erro ao processar o arquivo {convertedFilePath}: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
+                            idsArquivos.Clear();
+                        });
                     }
                 }
+                MessageBox.Show("Arquivo processado com sucesso!", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
             }
             catch (Exception ex)
             {

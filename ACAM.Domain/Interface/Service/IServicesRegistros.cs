@@ -35,5 +35,7 @@ namespace ACAM.Domain.Interface.Service
         void ProcessaCAFCSV(int idArquivo, string caminho);
 
         void NovoProcessarCsvPorStreaming(string caminhoCsv, int idArquivo);
+
+        void GerarCSVUnificado(List<int> idArquivos);
     }
 }

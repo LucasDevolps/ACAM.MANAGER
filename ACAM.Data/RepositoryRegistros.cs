@@ -20,6 +20,8 @@ namespace ACAM.Data
         private readonly string _caminhoImportacaoLocal;
         private string _NOME_RELATORIO;
 
+        public static ConfigurationBuilder _builder = new ConfigurationBuilder();
+        public string _caminhoImportacao;
         public RepositoryRegistros()
         {
             var builder = new ConfigurationBuilder();
@@ -27,6 +29,7 @@ namespace ACAM.Data
             _configuration = builder.Build();
             _connectionString = _configuration.GetConnectionString("DefaultConnection") ?? "";
             _caminhoImportacaoLocal = _configuration["Configuracoes:CaminhoLocal"] ?? string.Empty;
+            _caminhoImportacao = Path.Combine(_configuration["Configuracoes:CaminhoLocal"], "V2", "Convertidos");
         }
         public void ProcessarCsvPorStreaming(string caminhoCsv, int idArquivo)
         {
@@ -77,7 +80,7 @@ namespace ACAM.Data
             {
                 Directory.CreateDirectory(processedDirectory);
             }
-             
+
             string processedFilePath = Path.Combine(processedDirectory, Path.GetFileName(caminhoCsv));
             File.Move(caminhoCsv, processedFilePath, true);
         }
@@ -92,7 +95,7 @@ namespace ACAM.Data
 
                 using (var csv = new CsvReader(reader, config))
                 {
-                    csv.Read(); 
+                    csv.Read();
                     csv.ReadHeader();
 
                     var buffer = new List<AcamRestritivaCAFDTO>();
@@ -561,7 +564,7 @@ namespace ACAM.Data
                         if (registroForaLimite.Count > 0 || registroDentroLimite.Count > 0)
                         {
                             //GERAR ACAM DE SAIDA
-                            GerarRelatorioFinal(registroForaLimite, registroDentroLimite,caminhoArquivo);
+                            GerarRelatorioFinal(registroForaLimite, registroDentroLimite, caminhoArquivo);
                         }
                     }
                 }
@@ -632,7 +635,7 @@ namespace ACAM.Data
                 WHERE Amount > @valorMinimo
                   AND Id_arquivo = @idFile
                   AND TrnDate >= DATEADD(DAY, -365, GETDATE())";
-            
+
             string queryFiltrarTudo = @"
                 SELECT Client, Pix_Key, cpf_name, Amount, TrnDate
                 FROM AcamData
@@ -692,7 +695,7 @@ namespace ACAM.Data
                             }
                         }
 
-                        if(registrosNaoInseridos.Count == 0)
+                        if (registrosNaoInseridos.Count == 0)
                         {
                             using (var command = new NpgsqlCommand(queryFiltrarTudo, connection, transaction))
                             {
@@ -746,7 +749,7 @@ namespace ACAM.Data
 
                         transaction.Commit();
                         // Gerar relatório dos não inseridos
-                        if(registrosNaoInseridos.Count > 0)
+                        if (registrosNaoInseridos.Count > 0)
                         {
                             SalvarRelatorioNaoInseridos(registrosNaoInseridos, idFile);
                         }
@@ -762,10 +765,10 @@ namespace ACAM.Data
         public string NomeDoRelatorio()
         {
             string inicio = "RelatorioNaoInseridos";
-            string data = $"_{ DateTime.Now.Day}_{DateTime.Now.Month}_{DateTime.Now.Year}";
+            string data = $"_{DateTime.Now.Day}_{DateTime.Now.Month}_{DateTime.Now.Year}";
             string hora = $"_{DateTime.Now.Hour}_{DateTime.Now.Minute}_{DateTime.Now.Second}";
 
-            return inicio + data+ hora+ ".xlsx";
+            return inicio + data + hora + ".xlsx";
         }
         private void GerarAcamSaida(IEnumerable<AcamDTO> registroForaLimite, IEnumerable<AcamDTO> registroDentroLimite)
         {
@@ -797,7 +800,7 @@ namespace ACAM.Data
                 Console.WriteLine(ex.Message);
             }
         }
-        private void GerarRelatorioFinal(IEnumerable<AcamDTO> registroForaLimite, IEnumerable<AcamDTO> registroDentroLimite,string caminho)
+        private void GerarRelatorioFinal(IEnumerable<AcamDTO> registroForaLimite, IEnumerable<AcamDTO> registroDentroLimite, string caminho)
         {
             try
             {
@@ -843,7 +846,7 @@ namespace ACAM.Data
                 using var workbook = new XLWorkbook();
 
                 var worksheetBanco = workbook.Worksheets.Add("Registros Banco");
-                var registrosBanco = ObterRegistrosBanco(idArquivo); 
+                var registrosBanco = ObterRegistrosBanco(idArquivo);
                 PreencherGuiaExcel(worksheetBanco, registrosBanco);
 
                 var worksheetNaoInseridos = workbook.Worksheets.Add("Não Inseridos");
@@ -885,12 +888,12 @@ namespace ACAM.Data
 
                         using (var reader = command.ExecuteReader())
                         {
-                            dataTable.Load(reader); 
+                            dataTable.Load(reader);
                         }
                     }
                 }
 
-                return dataTable; 
+                return dataTable;
             }
             catch (Exception ex)
             {
@@ -1104,10 +1107,10 @@ namespace ACAM.Data
                 return new List<AcamDTO>();
             }
 
-            
+
         }
-        public void ForcaImportacaoRestritiva(int idArquivo) 
-        {  
+        public void ForcaImportacaoRestritiva(int idArquivo)
+        {
             string queryInserir = @"
                         INSERT INTO Acam_Restritiva (Client, Pix_Key, cpf_name, Amount, TrnDate, Id_arquivo)
                         VALUES (@Client, @Pix_Key, @cpf_name, @Amount, @TrnDate, @Id_arquivo)";
@@ -1242,7 +1245,7 @@ namespace ACAM.Data
                         try
                         {
                             var registro = csv.GetRecord<AcamRestritivaCAFDTO>();
-                            registro.IdArquivo = idArquivo; 
+                            registro.IdArquivo = idArquivo;
                             buffer.Add(registro);
 
                             if (buffer.Count == 1000)
@@ -1264,6 +1267,133 @@ namespace ACAM.Data
                 }
             }
         }
-    }
 
+        public void GerarCSVUnificado(List<int> idArquivos)
+        {
+            try
+            {
+                var registros = new List<AcamRestritivaCAFDTO>();
+
+                // Obtenha os registros com base nos IDs
+                foreach (var idArquivo in idArquivos)
+                {
+                    registros.AddRange(ObterRegistrosPorIdArquivo(idArquivo));
+                }
+
+                // Dividir registros em categorias
+                var negativos = registros.Where(r => !ExisteNaRestritiva(r.CPFCNPJ) && !ExisteNoCAF(r.CPFCNPJ)).ToList();
+                var positivos = registros;
+                var excluidos = registros.Except(negativos).Except(positivos).ToList();
+
+                // Criar pasta de relatórios
+                string reportDirectory = Path.Combine(_caminhoImportacao, "relatórios");
+                if(!Directory.Exists(reportDirectory))
+                    Directory.CreateDirectory(reportDirectory);
+
+                string reportFilePath = Path.Combine(reportDirectory, $"Relatório_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+
+                using (var package = new OfficeOpenXml.ExcelPackage())
+                {
+                    // Aba Negativo
+                    var negativeSheet = package.Workbook.Worksheets.Add("Negativo");
+                    negativeSheet.Cells.LoadFromCollection(negativos, true);
+
+                    // Aba Positivo
+                    var positiveSheet = package.Workbook.Worksheets.Add("Positivo");
+                    positiveSheet.Cells.LoadFromCollection(positivos, true);
+
+                    // Aba Excluido
+                    var excludedSheet = package.Workbook.Worksheets.Add("Excluido");
+                    excludedSheet.Cells.LoadFromCollection(excluidos, true);
+
+                    package.SaveAs(new FileInfo(reportFilePath));
+                }
+
+                Console.WriteLine($"Relatório salvo em: {reportFilePath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao gerar o relatório: {ex.Message}");
+            }
+        }
+        public List<AcamRestritivaCAFDTO> ObterRegistrosPorIdArquivo(int idArquivo)
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string query = @"SELECT 
+                            client AS Nome,
+                            pix_key,
+                            cpf_name AS CPFCNPJ, -- Ajustado para o nome correto da coluna de CPF
+                            amount,
+                            trndate,
+                            id_arquivo
+                        FROM acamdata
+                        WHERE id_arquivo = @IdArquivo";
+
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@IdArquivo", idArquivo);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var registros = new List<AcamRestritivaCAFDTO>();
+
+                        while (reader.Read())
+                        {
+                            registros.Add(new AcamRestritivaCAFDTO
+                            {
+                                Nome = reader["Nome"].ToString(),
+                                CPFCNPJ = reader["CPFCNPJ"].ToString(),
+                                IdArquivo = Convert.ToInt32(reader["id_arquivo"]),
+                                ind_positivo = false // Padrão
+                            });
+                        }
+
+                        return registros;
+                    }
+                }
+            }
+        }
+
+        private bool ExisteNaRestritiva(string cpf)
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string query = @"SELECT COUNT(1)
+                         FROM acam_restritiva
+                         WHERE cpf_name = @Cpf"; // Ajustado para o nome correto da coluna
+
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Cpf", cpf);
+
+                    return Convert.ToInt32(command.ExecuteScalar()) > 0;
+                }
+            }
+        }
+
+        private bool ExisteNoCAF(string cpf)
+        {
+            using (var connection = new NpgsqlConnection(_connectionString))
+            {
+                connection.Open();
+
+                string query = @"SELECT COUNT(1)
+                         FROM caf
+                         WHERE cpfcnpj = @Cpf"; // Ajustado para o nome correto da coluna
+
+                using (var command = new NpgsqlCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Cpf", cpf);
+
+                    return Convert.ToInt32(command.ExecuteScalar()) > 0;
+                }
+            }
+        }
+
+    }
 }

@@ -89,5 +89,10 @@ namespace ACAM.Service
             _repository.ProcessaCAFCSV(idArquivo, caminho);
         }
 
+        public void GerarCSVUnificado(List<int> idArquivos)
+        {
+            _repository.GerarCSVUnificado(idArquivos);
+        }
+
     }
 }
