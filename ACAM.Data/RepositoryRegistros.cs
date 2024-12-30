@@ -50,7 +50,17 @@ namespace ACAM.Data
                         try
                         {
                             var registro = csv.GetRecord<AcamDTO>();
-                            registro.Id_file = idArquivo; // Adicionar o ID do arquivo ao registro
+                            registro.Id_file = idArquivo;
+                            if (caminhoCsv.ToLower().Contains("positivo"))
+                                registro.ind_positivo = true;
+                            else if(caminhoCsv.ToLower().Contains("negativo"))
+                            {
+                                registro.ind_positivo = false;
+                            }
+                            else
+                            {
+                                registro.ind_positivo = true;
+                            }
                             buffer.Add(registro);
 
                             if (buffer.Count == 1000)
@@ -68,6 +78,53 @@ namespace ACAM.Data
                     if (buffer.Count > 0)
                     {
                         SalvarNoBanco(buffer); // Salvar qualquer dado restante
+                    }
+                }
+            }
+        }
+        public void NovoProcessarCsvPorStreaming(string caminhoCsv, int idArquivo)
+        {
+            using (var reader = new StreamReader(caminhoCsv))
+            {
+                var config = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+                {
+                    MissingFieldFound = null // Ignorar campos ausentes
+                };
+
+                using (var csv = new CsvReader(reader, config))
+                {
+                    csv.Read(); 
+                    csv.ReadHeader();
+
+                    var buffer = new List<AcamRestritivaCAFDTO>();
+                    while (csv.Read())
+                    {
+                        try
+                        {
+                            var registro = csv.GetRecord<AcamRestritivaCAFDTO>();
+                            if (caminhoCsv.ToLower().Contains("positi") || !caminhoCsv.ToLower().Contains("negat"))
+                            {
+                                registro.ind_positivo = true;
+                            }
+                            else
+                                registro.ind_positivo = false;
+                            buffer.Add(registro);
+
+                            if (buffer.Count == 1000)
+                            {
+                                NovoSalvarNoBanco(buffer); // Salvar no banco em lotes
+                                buffer.Clear();
+                            }
+                        }
+                        catch (CsvHelperException ex)
+                        {
+                            Console.WriteLine($"Erro ao processar o registro: {ex.Message}");
+                        }
+                    }
+
+                    if (buffer.Count > 0)
+                    {
+                        NovoSalvarNoBanco(buffer); // Salvar qualquer dado restante
                     }
                 }
             }
@@ -90,6 +147,7 @@ namespace ACAM.Data
                         table.Columns.Add("Amount", typeof(decimal));
                         table.Columns.Add("TrnDate", typeof(DateTime));
                         table.Columns.Add("id_arquivo", typeof(int));
+                        table.Columns.Add("ind_positivo", typeof(bool));
 
                         foreach (var registro in buffer)
                         {
@@ -99,11 +157,78 @@ namespace ACAM.Data
                                 registro.cpf_name,
                                 decimal.TryParse(registro.Amount, out var amount) ? amount : (object)DBNull.Value,
                                 registro.TrnDate,
-                                registro.Id_file
+                                registro.Id_file,
+                                registro.ind_positivo
+
                             );
                         }
 
-                        using (var writer = connection.BeginBinaryImport("COPY AcamData (Client, Pix_Key, cpf_name, Amount, TrnDate, id_arquivo) FROM STDIN (FORMAT BINARY)"))
+                        using (var writer = connection.BeginBinaryImport("COPY AcamData (Client, Pix_Key, cpf_name, Amount, TrnDate, id_arquivo, ind_positivo) FROM STDIN (FORMAT BINARY)"))
+                        {
+                            foreach (DataRow row in table.Rows)
+                            {
+                                writer.StartRow();
+                                for (int i = 0; i < table.Columns.Count; i++)
+                                {
+                                    writer.Write(row[i]);
+                                }
+                            }
+                            writer.Complete();
+                        }
+
+                        transaction.Commit();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                var logger = new LoggerRepository();
+                logger.Log(ex);
+            }
+        }
+        public void NovoSalvarNoBanco(List<AcamRestritivaCAFDTO> buffer)
+        {
+            try
+            {
+                using (var connection = new NpgsqlConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        var table = new DataTable();
+                        table.Columns.Add("ID", typeof(string));
+                        table.Columns.Add("CriadoEm", typeof(DateTime));
+                        table.Columns.Add("AtualizadoEm", typeof(DateTime));
+                        table.Columns.Add("CriadoPor", typeof(string));
+                        table.Columns.Add("Nome", typeof(string));
+                        table.Columns.Add("CPFCNPJ", typeof(string));
+                        table.Columns.Add("Status", typeof(string));
+                        table.Columns.Add("Mensagem", typeof(string));
+                        table.Columns.Add("MotivoReprovacao", typeof(string));
+                        table.Columns.Add("URLTrust", typeof(string));
+                        table.Columns.Add("IdArquivo", typeof(int));
+                        table.Columns.Add("ind_positivo", typeof(bool));
+
+                        foreach (var registro in buffer)
+                        {
+                            table.Rows.Add(
+                                registro.ID,
+                                registro.CriadoEm ?? (object)DBNull.Value,
+                                registro.AtualizadoEm ?? (object)DBNull.Value,
+                                registro.CriadoPor,
+                                registro.Nome,
+                                registro.CPFCNPJ,
+                                registro.Status,
+                                registro.Mensagem,
+                                registro.MotivoReprovacao,
+                                registro.URLTrust,
+                                registro.IdArquivo,
+                                registro.ind_positivo
+                            );
+                        }
+
+                        using (var writer = connection.BeginBinaryImport("COPY Acam_Restritiva (ID, CriadoEm, AtualizadoEm, CriadoPor, Nome, CPFCNPJ, Status, Mensagem, MotivoReprovacao, URLTrust, IdArquivo, ind_positivo) FROM STDIN (FORMAT BINARY)"))
                         {
                             foreach (DataRow row in table.Rows)
                             {

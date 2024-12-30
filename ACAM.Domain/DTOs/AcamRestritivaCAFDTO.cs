@@ -12,6 +12,7 @@
         public string Mensagem { get; set; }       
         public string MotivoReprovacao { get; set; }
         public string URLTrust { get; set; }       
-        public int IdArquivo { get; set; }         
+        public int IdArquivo { get; set; }   
+        public bool ind_positivo { get; set; }
     }
 }

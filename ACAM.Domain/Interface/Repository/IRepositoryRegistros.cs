@@ -31,5 +31,8 @@ namespace ACAM.Domain.Interface.Repository
         Task ImportarCAF(List<AcamRestritivaCAFDTO> buffer);
 
         void ProcessaCAFCSV(int idArquivo, string caminho);
+
+        void NovoProcessarCsvPorStreaming(string caminhoCsv, int idArquivo);
+
     }
 }

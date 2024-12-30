@@ -11,5 +11,7 @@
 
         public int Id_file { get; set; }
         public int restrito { get; set; }
+
+        public bool ind_positivo { get; set; }
     }
 }

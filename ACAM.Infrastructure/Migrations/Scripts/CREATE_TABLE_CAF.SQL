@@ -10,5 +10,6 @@ CREATE TABLE CAF (
     MotivoReprovacao TEXT,                        -- Motivo da reprovação na Documentoscopia
     URLTrust VARCHAR(2083),                       -- URL da Trust
     Id_arquivo INT NOT NULL,                      -- Identificador do arquivo associado
+    ind_positivo BOOLEAN DEFAULT TRUE
     CONSTRAINT FK_Id_arquivo FOREIGN KEY (Id_arquivo) REFERENCES acamarquivo(id_arquivo) ON DELETE CASCADE
 );

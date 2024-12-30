@@ -19,6 +19,10 @@ namespace ACAM.Service
         {
             _repository.ProcessarCsvPorStreaming(caminhoCsv, idArquivo);
         }
+        public void NovoProcessarCsvPorStreaming(string caminhoCsv, int idArquivo)
+        {
+            _repository.NovoProcessarCsvPorStreaming(caminhoCsv, idArquivo);
+        }
         public void SalvarNoBanco(List<AcamDTO> buffer, int idArquivo)
         {
             _repository.SalvarNoBanco(buffer);
@@ -84,5 +88,6 @@ namespace ACAM.Service
         {
             _repository.ProcessaCAFCSV(idArquivo, caminho);
         }
+
     }
 }

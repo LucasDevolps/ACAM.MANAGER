@@ -133,6 +133,10 @@ namespace ACAM.Management.Presentation
                         {
                             idArquivo = await _serviceArquivo.InicioDoProcessoArquivo(inputFilePath);
 
+                            await Task.Run(() =>
+                            {
+                                _servicesRegistros.ProcessarCsvPorStreaming(convertedFilePath, idArquivo);
+                            });
                                                       
                         }
                         catch (Exception ex)
@@ -158,7 +162,6 @@ namespace ACAM.Management.Presentation
                 btnProcessar.Enabled = true;
             }
         }
-
 
         private string ConvertExcelToCsv(string inputFilePath, string outputDirectory)
         {
@@ -203,7 +206,13 @@ namespace ACAM.Management.Presentation
                                     break;
                                 }
 
-                                rowValues.Add(cellValue);
+                                // Substituir vírgula por ponto no Amount
+                                if (row > 1 && validColumns.Contains("amount", StringComparer.OrdinalIgnoreCase) && col == Array.IndexOf(validColumns, "amount") + 1)
+                                {
+                                    cellValue = cellValue.Replace(",", ".");
+                                }
+
+                                rowValues.Add(cellValue.Replace(",","."));
                             }
 
                             // Se a linha não for válida, definir a flag e continuar
@@ -223,6 +232,7 @@ namespace ACAM.Management.Presentation
 
             return outputFilePath;
         }
+
     }
 }
  

@@ -23,3 +23,7 @@ CREATE INDEX IX_AcamArquivo_Nome_arquivo ON AcamArquivo (nome_arquivo);
 ALTER TABLE AcamData
 ADD CONSTRAINT fk_acamdata_acamarquivo FOREIGN KEY (id_arquivo)
 REFERENCES AcamArquivo (id_arquivo);
+
+ALTER TABLE AcamData
+ADD COLUMN ind_positivo BOOLEAN DEFAULT FALSE;
+
