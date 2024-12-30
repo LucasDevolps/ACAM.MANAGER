@@ -1,4 +1,5 @@
 ﻿using ACAM.Domain.Interface.Repository;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Npgsql; // Biblioteca para PostgreSQL
 using System;
@@ -26,12 +27,12 @@ namespace ACAM.Data
             try
             {
                 // Estabelece conexão com o banco de dados
-                using (var connection = new NpgsqlConnection(_connectionString))
+                using (var connection = new SqlConnection(_connectionString))
                 {
                     connection.Open();
 
                     // Executa o comando
-                    using (var command = new NpgsqlCommand(query, connection))
+                    using (var command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@Mensagem", exception.Message);
                         command.Parameters.AddWithValue("@Stack", exception.StackTrace ?? string.Empty); // Evita valor nulo para StackTrace

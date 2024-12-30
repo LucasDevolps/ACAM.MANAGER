@@ -16,12 +16,12 @@ namespace ACAM.Service
             return await _repository.InicioDoProcessoArquivo(localDoArquivo);
         }
 
-        public async Task InserirArquivo(string nomeArquivo, NpgsqlConnection connection, NpgsqlTransaction transaction)
+        public async Task InserirArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
         {
             await _repository.InserirArquivo(nomeArquivo,connection, transaction);
         }
 
-        public async Task<int> RecuperarIdArquivo(string nomeArquivo, NpgsqlConnection connection, NpgsqlTransaction transaction)
+        public async Task<int> RecuperarIdArquivo(string nomeArquivo, SqlConnection connection, SqlTransaction transaction)
         {
             return await _repository.RecuperarIdArquivo(nomeArquivo, connection, transaction);
         }

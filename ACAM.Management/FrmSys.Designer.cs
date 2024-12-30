@@ -35,6 +35,8 @@
             lblImportarEConverter = new ToolStripMenuItem();
             toolStripMenuItem1 = new ToolStripMenuItem();
             btnImportaRetrita = new ToolStripMenuItem();
+            btnImportCAF = new ToolStripMenuItem();
+            toolStripSeparator4 = new ToolStripSeparator();
             mnuConsultaBaseCentral = new ToolStripMenuItem();
             mnuConsultaBaseRestrira = new ToolStripMenuItem();
             toolStripSeparator1 = new ToolStripSeparator();
@@ -44,8 +46,6 @@
             toolStripSeparator2 = new ToolStripSeparator();
             sairToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1 = new StatusStrip();
-            toolStripSeparator4 = new ToolStripSeparator();
-            btnImportCAF = new ToolStripMenuItem();
             mnuSystem.SuspendLayout();
             SuspendLayout();
             // 
@@ -81,7 +81,7 @@
             lblImportarEConverter.ImageTransparentColor = Color.Magenta;
             lblImportarEConverter.Name = "lblImportarEConverter";
             lblImportarEConverter.Size = new Size(243, 22);
-            lblImportarEConverter.Text = "Converter XLS";
+            lblImportarEConverter.Text = "Converter XLS e Importar";
             lblImportarEConverter.Click += lblImportarEConverter_Click;
             // 
             // toolStripMenuItem1
@@ -100,6 +100,20 @@
             btnImportaRetrita.Size = new Size(243, 22);
             btnImportaRetrita.Text = "&Importar Base Restrita";
             btnImportaRetrita.Click += btnImportaRetrita_Click;
+            // 
+            // btnImportCAF
+            // 
+            btnImportCAF.Image = (Image)resources.GetObject("btnImportCAF.Image");
+            btnImportCAF.ImageTransparentColor = Color.Magenta;
+            btnImportCAF.Name = "btnImportCAF";
+            btnImportCAF.Size = new Size(243, 22);
+            btnImportCAF.Text = "&Importar CAF";
+            btnImportCAF.Click += btnImportCAF_Click;
+            // 
+            // toolStripSeparator4
+            // 
+            toolStripSeparator4.Name = "toolStripSeparator4";
+            toolStripSeparator4.Size = new Size(240, 6);
             // 
             // mnuConsultaBaseCentral
             // 
@@ -164,20 +178,6 @@
             statusStrip1.Size = new Size(900, 22);
             statusStrip1.TabIndex = 1;
             statusStrip1.Text = "statusStrip1";
-            // 
-            // toolStripSeparator4
-            // 
-            toolStripSeparator4.Name = "toolStripSeparator4";
-            toolStripSeparator4.Size = new Size(240, 6);
-            // 
-            // btnImportCAF
-            // 
-            btnImportCAF.Image = (Image)resources.GetObject("btnImportCAF.Image");
-            btnImportCAF.ImageTransparentColor = Color.Magenta;
-            btnImportCAF.Name = "btnImportCAF";
-            btnImportCAF.Size = new Size(243, 22);
-            btnImportCAF.Text = "&Importar CAF";
-            btnImportCAF.Click += btnImportCAF_Click;
             // 
             // FrmSys
             // 
