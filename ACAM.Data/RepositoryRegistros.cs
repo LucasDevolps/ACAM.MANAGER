@@ -51,16 +51,7 @@ namespace ACAM.Data
                         {
                             var registro = csv.GetRecord<AcamDTO>();
                             registro.Id_file = idArquivo;
-                            if (caminhoCsv.ToLower().Contains("positivo"))
-                                registro.ind_positivo = true;
-                            else if(caminhoCsv.ToLower().Contains("negativo"))
-                            {
-                                registro.ind_positivo = false;
-                            }
-                            else
-                            {
-                                registro.ind_positivo = true;
-                            }
+                            registro.ind_positivo = Convert.ToDecimal(registro.Amount) > 0;
                             buffer.Add(registro);
 
                             if (buffer.Count == 1000)
